@@ -1,0 +1,6 @@
+.DS_Store
+.project
+*.pyc
+.Rhistory
+.idea/
+.ipynb_checkpoints/
