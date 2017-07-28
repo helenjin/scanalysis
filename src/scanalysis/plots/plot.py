@@ -169,7 +169,37 @@ def plot_molecules_per_cell_and_gene(data, fig=None, ax=None):
 
     return fig, ax
 
-def plot_pca_variance_explained(data, n_components=30,
+
+## IF I have time, change the run_pca() to the one in this package.
+def plot_pca_variance_explained_v1(data, n_components=30,
+        fig=None, ax=None, ylim=(0, 0.1), random=True):
+    """ Plot the variance explained by different principal components
+    :param n_components: Number of components to show the variance
+    :param ylim: y-axis limits
+    :param fig: matplotlib Figure object
+    :param ax: matplotlib Axis object
+    :return: fig, ax
+
+    from Wishbone package, revised
+    """
+    
+    solver = 'randomized'
+    if random != True:
+        solver = 'full'
+    pca = PCA(n_components=n_components, svd_solver=solver)
+    pca.fit(data.values)
+
+    fig, ax = get_fig(fig=fig, ax=ax)
+    ax.plot(np.ravel(pca.explained_variance_ratio_))
+    plt.ylim(ylim)
+    plt.xlim((0, n_components))
+    plt.xlabel('Components')
+    plt.ylabel('Variance explained')
+    plt.title('Principal components')
+    sns.despine(ax=ax)
+    return fig, ax
+    
+def plot_pca_variance_explained_v2(data, n_components=30,
         fig=None, ax=None, ylim=(0, 100), random=True):
     """ Plot the variance explained by different principal components
     :param n_components: Number of components to show the variance
@@ -177,6 +207,8 @@ def plot_pca_variance_explained(data, n_components=30,
     :param fig: matplotlib Figure object
     :param ax: matplotlib Axis object
     :return: fig, ax
+
+    from MAGIC package
     """
 
     solver = 'randomized'

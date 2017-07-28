@@ -19,7 +19,7 @@ if shutil.which('pip3'):
 setup(name='SCAnalysis',
       version='0.0',
       description='Single Cell Analysis',
- #     url='https://github.com/helenjin/scanalysis',
+      url='https://github.com/helenjin/scanalysis',
       author='',
       author_email='',
       package_dir={'': 'src'},
@@ -46,18 +46,18 @@ setup(name='SCAnalysis',
 setup_dir = os.path.dirname(os.path.realpath(__file__))
 
 # install GSEA, diffusion components
-#tools_dir = os.path.expanduser('~/.wishbone/tools')
-#if os.path.isdir(tools_dir):
-#    shutil.rmtree(tools_dir)
-#shutil.copytree(setup_dir + '/tools/', tools_dir)
-#shutil.unpack_archive(tools_dir + '/mouse_gene_sets.tar.gz', tools_dir)
-#shutil.unpack_archive(tools_dir + '/human_gene_sets.tar.gz', tools_dir)
+tools_dir = os.path.expanduser('~/.scanalysis/tools')
+if os.path.isdir(tools_dir):
+    shutil.rmtree(tools_dir)
+shutil.copytree(setup_dir + '/tools/', tools_dir)
+shutil.unpack_archive(tools_dir + '/mouse_gene_sets.tar.gz', tools_dir)
+shutil.unpack_archive(tools_dir + '/human_gene_sets.tar.gz', tools_dir)
 
 # Copy test data
-#data_dir = os.path.expanduser('~/.wishbone/data')
-#if os.path.isdir(data_dir):
-#    shutil.rmtree(data_dir)
-#shutil.copytree(setup_dir + '/data/', data_dir)
+data_dir = os.path.expanduser('~/.scanalysis/data')
+if os.path.isdir(data_dir):
+    shutil.rmtree(data_dir)
+shutil.copytree(setup_dir + '/data/', data_dir)
 
 # Create directory for GSEA reports
-#os.makedirs( os.path.expanduser('~/.wishbone/gsea/'), exist_ok=True )
+os.makedirs( os.path.expanduser('~/.scanalysis/gsea/'), exist_ok=True )

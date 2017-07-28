@@ -1,13 +1,21 @@
-@staticmethod
+import re
+import os
+import shutil
+import shlex
+import glob
+import pandas as pd
+
+from subprocess import call, Popen, PIPE
+
 def _gmt_options():
-    mouse_options = os.listdir(os.path.expanduser('~/.wishbone/tools/mouse'))
-    human_options = os.listdir(os.path.expanduser('~/.wishbone/tools/human'))
+    mouse_options = os.listdir(os.path.expanduser('~/.scanalysis/tools/mouse'))
+    human_options = os.listdir(os.path.expanduser('~/.scanalysis/tools/human'))
     print('Available GSEA .gmt files:\n\nmouse:\n{m}\n\nhuman:\n{h}\n'.format(
             m='\n'.join(mouse_options),
             h='\n'.join(human_options)))
     print('Please specify the gmt_file parameter as gmt_file=(organism, filename)')
 
-@staticmethod
+
 def _gsea_process(c, diffusion_map_correlations, output_stem, gmt_file):
 
     # save the .rnk file
@@ -56,7 +64,7 @@ def _gsea_process(c, diffusion_map_correlations, output_stem, gmt_file):
         # execute if file cannot be found
         return b'GSEA output pattern was not found, and could not be changed.'
 
-def run_gsea(self, output_stem, gmt_file=None,
+def run_gsea(diffusion_map_correlations, output_stem, gmt_file=None,
     components=None, enrichment_threshold=1e-1):
     """ Run GSEA using gene rankings from diffusion map correlations
     :param output_stem: the file location and prefix for the output of GSEA
@@ -64,18 +72,16 @@ def run_gsea(self, output_stem, gmt_file=None,
     :param components: Iterable of integer component numbers
     :param enrichment_threshold: FDR corrected p-value significance threshold for gene set enrichments
     :return: Dictionary containing the top enrichments for each component
+    
+    *Please run run_diffusion_map_correlations() before running GSEA to annotate those components.
     """
 
     out_dir, out_prefix = os.path.split(output_stem)
     out_dir += '/'
     os.makedirs(out_dir, exist_ok=True)
 
-    if self.diffusion_eigenvectors is None:
-        raise RuntimeError('Please run run_diffusion_map_correlations() '
-                           'before running GSEA to annotate those components.')
-
     if not gmt_file:
-        self._gmt_options()
+        _gmt_options()
         return
     else:
         if not len(gmt_file) == 2:
@@ -83,13 +89,13 @@ def run_gsea(self, output_stem, gmt_file=None,
         gmt_file = os.path.expanduser('~/.wishbone/tools/{}/{}').format(*gmt_file)
 
     if components is None:
-        components = self.diffusion_map_correlations.columns
+        components = diffusion_map_correlations.columns
 
     # Run GSEA
     print('If running in notebook, please look at the command line window for GSEA progress log')
     reports = dict()
     for c in components:
-        res = self._gsea_process( c, self._diffusion_map_correlations,
+        res = _gsea_process( c, diffusion_map_correlations,
             output_stem, gmt_file )
         # Load results
         if res == b'':
