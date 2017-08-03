@@ -1,14 +1,17 @@
+import numpy as np
 import pandas as pd
 import os.path
+import fcsparser
+
 
 def load(filename):
     """
     :parameter: str, name of .csv (csv file) or .p (pickle archive)
     :return: df, which is a pandas DataFrame object
     """
+    
+    # load single cell RNA-seq data from .csv file
     if (filename[len(filename)-4:] == ".csv"):
- #       data = pd.read_csv(filename) <-- weird formatting after running multiple times
-#       filepath_or_buffer = filename <--is it necessary?
         try:
             df = pd.DataFrame.from_csv(filename)
             print("Successfully loaded " + filename)
@@ -17,20 +20,52 @@ def load(filename):
             print("Loading failed. Check that you've chosen the right .csv file")
             return
 
+    # load mass cytometry (mass-cyt) data from .fcs file
+    if (filename[len(filename)-4:] == ".fcs"):
+        try:
+            # Parse the fcs file
+            text, data = fcsparser.parse(filename)
+            data = data.astype(np.float64)
+            
+            # Extract the S and N features (Indexing assumed to start from 1)
+            # Assumes channel names are in S
+            no_channels = text['$PAR']
+            channel_names = [''] * no_channels
+            for i in range(1, no_channels+1):
+                # S name
+                try:
+                    channel_names[i - 1] = text['$P%dS' % i]
+                except KeyError:
+                    channel_names[i - 1] = text['$P%dN' % i]
+            data.columns = channel_names
+            
+            # Metadata and data
+            metadata_channels = data.columns.intersection(metadata_channels)
+            data_channels = data.columns.difference( metadata_channels )
+            metadata = data[metadata_channels]
+            data = data[data_channels]
+            return data
+           # # Transform if necessary
+           # if cofactor is not None and cofactor > 0:
+           #     data = np.arcsinh(np.divide( data, cofactor ))
+        except FileNotFoundError:
+            print("Loading failed. Check that you've chosen the right .fcs file")
+            return
+    
+    # load data from pickle file
     if (filename[len(filename)-2:] == ".p"):
-       # with open(filename, 'rb') as f:
-#            loaded = pickle.load(f)
         try:
             df = pd.read_pickle(filename)
-        #check to see if it is a pickled dataframe
+            
+            #check to see if it is a pickled dataframe
             if isinstance(df, pd.DataFrame):
                 print("Successfully loaded " + filename)
                 return df
-                #warning
+                
         except FileNotFoundError:
-            #print("Check that the pickle archive you've chosen is a pickled dataframe.")
             print("Loading failed. Check that you've chosen the right .p file")
             return
+        
         #sparse data in the mtx format or 10x format
         #if (filename[len(filename)-4:] == ".mtx"):
          #   df =
@@ -41,7 +76,7 @@ def load(filename):
         #      warning...
     
     else:
-        print("Loading failed. Please check that you've chosen the right file (.csv or .p)")
+        print("Loading failed. Please check that you've chosen the right file")
         return
 
     
@@ -89,22 +124,3 @@ def save(df, filename):
         #      warning...
         print("Saving failed. Please check that you've named the file correctly (.csv or .p)")
         return
-
-
-
-#a = load("t.csv")
-#save(a, "t2.csv")
-#print(a)
-#save(a, "t1.p")
-#b = load("t1.p")
-#print(b)
-#c = load("t.okk")
-#f = save(b, 5) ##do we need to account for when filename isn't a string?
-
-
-#d = load("../sample_scseq_data.csv")
-#print(d)
-#save(d, "s.csv")
-
-#e = load("pickle_file.p")
-
