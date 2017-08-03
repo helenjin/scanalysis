@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import bhtsne
-#from scanalysis.utils.pca import PCA
 
 class TSNE:
 
@@ -37,7 +36,8 @@ class TSNE:
         :return np.ndarray or pd.DataFrame: tsne results
         """
         
-        ## NEED TO RUN PCA BEFORE TSNE
+        ## NEED TO RUN PCA BEFORE TSNE ##
+        
         if isinstance(data, pd.DataFrame):
             data_ = data.values
         else:

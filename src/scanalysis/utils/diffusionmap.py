@@ -10,10 +10,10 @@ def run_diffusion_map(data, knn=10, normalization='smarkov', epsilon=1, n_diffus
         :return: diffusion eigen vectors and eigen values, both as pandas DataFrames 
         """
 
-        ### NEED to run PCA before running diffusion maps for single cell RNA-seq data ###
-
+        ## NEED to run PCA before running diffusion maps for single cell RNA-seq data ##
+        
+        # returns dictionary containing diffusion operator, weight matrix, diffusion eigen vectors, and diffusion eigen values
         d = GraphDiffusion.graph_diffusion.run_diffusion_map(data, knn, normalization, epsilon, n_diffusion_components)
-        # Dictionary containing diffusion operator, weight matrix, diffusion eigen vectors, and diffusion eigen values
         
         res1 = pd.DataFrame(d.get('EigenVectors'), index=data.index)      
         res2 = pd.DataFrame(d.get('EigenValues'))

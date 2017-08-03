@@ -43,10 +43,7 @@ def run_magic(data, n_pca_components=20, random_pca=True,
     return new_data
 
 
-
-## update that 
-
-
+# utility functions
 def impute_fast(data, L, t, rescale_percent=0, L_t=None, tprev=None):
 
     #convert L to full matrix

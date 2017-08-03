@@ -8,11 +8,11 @@ from warnings import warn
 if sys.version_info.major != 3:
     raise RuntimeError('SCAnalysis requires Python 3')
 
-# install phenograph if pip3 is installed
+# install phenograph, GraphDiffusion, and joblib if pip3 is installed
 if shutil.which('pip3'):
     call(['pip3', 'install', 'git+https://github.com/jacoblevine/phenograph.git'])
     call(['pip3', 'install', 'git+https://github.com/pkathail/GraphDiffusion.git'])
-# install GraphDiffusion if pip3 is installed ^
+    call(['pip3', 'install', 'git+https://github.com/joblib/joblib.git'])
 
 
 
@@ -23,7 +23,7 @@ setup(name='SCAnalysis',
       author='',
       author_email='',
       package_dir={'': 'src'},
-      packages=['scanalysis', 'scanalysis.io', 'scanalysis.tools', 'scanalysis.tools.wb', 'scanalysis.tools.pr', 'scanalysis.utils', 'scanalysis.plots'],
+      packages=['scanalysis', 'scanalysis.io', 'scanalysis.tools', 'scanalysis.tools.wb', 'scanalysis.utils', 'scanalysis.plots', 'scanalysis.tools.pr'],
       install_requires=[
           'numpy>=1.12.0',
           'pandas>=0.19.2',

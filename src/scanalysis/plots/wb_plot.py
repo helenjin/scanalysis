@@ -43,10 +43,8 @@ def plot_wishbone_on_tsne(Wishbone, tsne):
     If yes, press enter to continue.\n\
     If not, Ctrl-C to exit and retry with correct parameters.")
     
- #   if Wishbone.trajectory is None:
- #       raise RuntimeError('Please run Wishbone run_wishbone before plotting')
- #   if tsne is None:
- #       raise RuntimeError('Please run tSNE using scdata.run_tsne before plotting')
+    # Please run Wishbone using run_wishbone before plotting #
+    # Please run tSNE before plotting #
 
     # Set up figure
     fig = plt.figure(figsize=[8, 4])
@@ -61,16 +59,16 @@ def plot_wishbone_on_tsne(Wishbone, tsne):
     plt.title('Wishbone trajectory')
 
     # Branch
-#    if Wishbone.branch is not None:
-    s = True
-    if s:
-        ax = plt.subplot(gs[0, 1])
-        plt.scatter(tsne['x'], tsne['y'],
-            edgecolors='none', s=size, 
-            color=[Wishbone.branch_colors[i] for i in Wishbone.branch])
-        ax.xaxis.set_major_locator(plt.NullLocator())
-        ax.yaxis.set_major_locator(plt.NullLocator())
-        plt.title('Branch associations')
+    if Wishbone.branch is not None:
+        s = True
+        if s:
+            ax = plt.subplot(gs[0, 1])
+            plt.scatter(tsne['x'], tsne['y'],
+                edgecolors='none', s=size, 
+                color=[Wishbone.branch_colors[i] for i in Wishbone.branch])
+            ax.xaxis.set_major_locator(plt.NullLocator())
+            ax.yaxis.set_major_locator(plt.NullLocator())
+            plt.title('Branch associations')
     
     return fig, ax
 
@@ -87,10 +85,9 @@ def plot_marker_trajectory(data, Wishbone, markers, show_variance=False,
     :param ax: matplotlib Axis object
     :return Dictionary containing the determined trends for the different branches
     """
-#    if Wishbone.trajectory is None:
-#        raise RuntimeError('Please run Wishbone run_wishbone before plotting')
-    # if self.scdata.data_type == 'sc-seq' and show_variance:
-    #     raise RuntimeError('Variance calculation is currently not supported for single-cell RNA-seq')
+    # Please run Wishbone run_wishbone before plotting #
+    
+    # Variance calculation is currently not supported for single-cell RNA-seq (sc-seq) #
 
     # Compute bin locations and bin memberships
     trajectory = Wishbone.trajectory.copy()

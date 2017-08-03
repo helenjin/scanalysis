@@ -15,8 +15,6 @@ import networkx as nx
 
 from copy import deepcopy
 
-#from scanalysis.utils.pca import run_pca
-
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')  # catch experimental ipython widget warning
     import seaborn as sns
@@ -226,10 +224,6 @@ class Wishbone:
                         
                         
                         # Assign results
-                        #self._trajectory = trajectory
-                        #self._branch = branches
-                        #self._waypoints = waypoints
-                        
                         self.bas = bas
                         
                         trajectory1 = (trajectory - np.min(trajectory)) / (np.max(trajectory) - np.min(trajectory))
@@ -243,9 +237,7 @@ class Wishbone:
                         if branch:
                                 self.branch_colors = dict( zip([2, 1, 3], qualitative_colors(3)))
                                                        
-                      #  return dict(zip(['Trajectory', 'Waypoints', 'Branches', 'BAS'], [trajectory, waypoints, branches, bas]))
-
-
+                  
 
 
 

@@ -169,8 +169,7 @@ def plot_molecules_per_cell_and_gene(data, fig=None, ax=None):
 
     return fig, ax
 
-
-## IF I have time, change the run_pca() to the one in this package.
+# plot_pca_variance_explained versions 1&2 both run PCA by themselves.
 def plot_pca_variance_explained_v1(data, n_components=30,
         fig=None, ax=None, ylim=(0, 0.1), random=True):
     """ Plot the variance explained by different principal components
@@ -313,10 +312,8 @@ def plot_diffusion_components(tsne, diffusion_eigenvectors, diffusion_eigenvalue
     """ Plots the diffusion components on tSNE maps
     :return: fig, ax
     """
-   # if self.tsne is None:
-   #     raise RuntimeError('Please run tSNE before plotting diffusion components.')
-   # if self.diffusion_eigenvectors is None:
-   #     raise RuntimeError('Please run diffusion maps using run_diffusion_map before plotting')
+    # Please run tSNE before plotting diffusion components. #
+    # Please run diffusion maps using run_diffusion_map before plotting #
 
     height = int(2 * np.ceil(diffusion_eigenvalues.shape[0] / 5))
     width = 10
@@ -353,10 +350,9 @@ def run_diffusion_map_correlations(data, diffusion_eigenvectors, components=None
     :param no_cells: Window size for smoothing
     :return: None
     """
-#    if self.data_type == 'masscyt':
-#        raise RuntimeError('This function is designed to work for single cell RNA-seq')
-#    if self.diffusion_eigenvectors is None:
-#        raise RuntimeError('Please run diffusion maps using run_diffusion_map before determining correlations')
+    # This function is designed to work for single cell RNA-seq (not mass-cyt). #
+
+    # Please run diffusion maps using run_diffusion_map before determining correlations. #
 
     if components is None:
         components = np.arange(diffusion_eigenvectors.shape[1])
@@ -383,8 +379,6 @@ def run_diffusion_map_correlations(data, diffusion_eigenvectors, components=None
         diffusion_map_correlations[:, component_index] = _correlation(x, vals)
 
     # this is sorted by order, need it in original order (reverse the sort)
-#    self.diffusion_map_correlations = pd.DataFrame(diffusion_map_correlations[:, components],
-#                        index=self.data.columns, columns=components)
     res = pd.DataFrame(diffusion_map_correlations[:, components],
                        index=data.columns, columns=components)
     return res
@@ -421,6 +415,7 @@ def plot_gene_component_correlations(diffusion_map_correlations
     return fig, ax
 
 ###
+
 def scatter_gene_expression(data, genes, density=False, color=None, fig=None, ax=None):
     """ 2D or 3D scatter plot of expression of selected genes
     :param genes: Iterable of strings to scatter
