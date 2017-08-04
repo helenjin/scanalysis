@@ -4,11 +4,13 @@ import os.path
 import fcsparser
 
 
-def load(filename):
+def load(file):
     """
     :parameter: str, name of .csv (csv file) or .p (pickle archive)
     :return: df, which is a pandas DataFrame object
     """
+    
+    filename = os.path.expanduser(file)
     
     # load single cell RNA-seq data from .csv file
     if (filename[len(filename)-4:] == ".csv"):
@@ -81,7 +83,7 @@ def load(filename):
 
     
 
-def save(df, filename):
+def save(df, file):
     """
     :parameter df: str, name of pandas DataFrame object
     :parameter filename: str, name of .csv (csv file) or .p (pickle archive) that data will be saved to
@@ -90,27 +92,27 @@ def save(df, filename):
     NOTE: cannot overwrite an existing csv or pickle file
     """
 
-    file = os.path.expanduser(filename)
+    filename = os.path.expanduser(file)
     
-    if (file[len(file)-4:] == ".csv"):
-        if os.path.exists(file):
+    if (filename[len(file)-4:] == ".csv"):
+        if os.path.exists(filename):
             input("WARNING: This file already exists!\nPress enter to overwrite.\nPress Ctrl-C to exit and try again with a different file name.")
             
-        df.to_csv(file)
-        print("Successfully saved as " + file)
+        df.to_csv(filename)
+        print("Successfully saved as " + filename)
         return
  #       except:
 #            raise Exception("Check your inputs, especially the .csv file you chose.")
 
     ## FOR A PICKLE FILE, does the pickle file have to exist?
 
-    if (file[len(file)-2:] == ".p"):
-        if os.path.exists(file):
+    if (filename[len(file)-2:] == ".p"):
+        if os.path.exists(filename):
             input("WARNING: This file already exists!\nPress enter to overwrite.\nPress Ctrl-C to exit and try again with a different file name.")
             
         
-        df.to_pickle(file)
-        print("Successfully saved as " + file)
+        df.to_pickle(filename)
+        print("Successfully saved as " + filename)
         return
     ## will there be a case where the data frame won't exist/something is wrong with the df?
         
