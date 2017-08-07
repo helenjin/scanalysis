@@ -38,7 +38,7 @@ class Multibranch():
         num_landmarks
     """
 
-    def __init__(self, DMEigVals, dm_eigs, start_cell, num_waypoints,
+    def __init__(self, data, DMEigs, DMEigVals, dm_eigs, start_cell, num_waypoints,
         knn=25, flock=2, n_jobs=1, voting_scheme='exponential', max_iterations=25):
 
         # Initialize
@@ -51,13 +51,12 @@ class Multibranch():
 
         # Multi scale distance
         eig_vals = np.ravel(DMEigVals.values[dm_eigs])
-        self.data = DMEigVals.values[:, dm_eigs] * (eig_vals / (1-eig_vals))
-  #      self.data = pd.DataFrame( self.data, 
-  #          index=self.scdata.data.columns, columns=dm_eigs )
+        self.data = DMEigs.values[:, dm_eigs] * (eig_vals / (1-eig_vals))
+        self.data = pd.DataFrame( self.data, index=data.columns, columns=dm_eigs )
 
         # Find start cell
-        self.start_cell = random.sample( start_cell  , 1)[0]
-
+      #  self.start_cell = random.sample( start_cell , 1)[0]
+        self.start_cell = start_cell
         
 
 
@@ -88,7 +87,7 @@ class Multibranch():
             # Data vector
             vec = np.ravel(data[ind])
 
-            # Random initialzlation
+            # Random initialization
             iter_set = random.sample(range(N), 1)
 
             # Distances along the component
@@ -310,7 +309,7 @@ class Multibranch():
 
         # Append start cell
         if isinstance(self.num_waypoints, int):
-            self.max_min_sampling(  )
+            self.max_min_sampling()
             self.waypoints = pd.Index(self.waypoints.difference([self.start_cell]).unique())
         else:
             self.waypoints = self.num_waypoints
@@ -831,7 +830,7 @@ class Multibranch():
                 delayed(Multibranch._flock)(i, data, IDX, nbrs) for i in range(len(waypoints)))
 
         # Remove duplicates
-        waypoints = self.scdata.data.columns[waypoints]
+        waypoints = self.data.columns[waypoints]
         self.waypoints_dim = self.waypoints_dim.loc[~waypoints.duplicated()]
         self.waypoints = waypoints[~waypoints.duplicated()]
         self.waypoints_dim.index = self.waypoints
@@ -940,7 +939,7 @@ class Multibranch():
         cutoff = norm.ppf(0.9999, loc=np.median(ranks), 
             scale=np.median(np.abs((ranks - np.median(ranks)))))
         # dm_boundaries = pd.Index(set(self.data.idxmax()).union(self.data.idxmin()))
-        dm_boundaries = pd.Index(set(self.scdata.DMEigs.idxmax()).union(self.scdata.DMEigs.idxmin()))
+        dm_boundaries = pd.Index(set(self.DMEigs.idxmax()).union(self.DMEigs.idxmin()))
         cells = (ranks.index[ ranks > cutoff].intersection( dm_boundaries ))
 
         return cells, ranks
