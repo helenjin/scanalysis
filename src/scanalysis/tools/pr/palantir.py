@@ -285,20 +285,19 @@ def _shortest_path_helper(cls, cell, adj):
     graph = nx.Graph(adj)
     return pd.Series(nx.single_source_dijkstra_path_length(graph, cell))
 
-def run_multibranch(self):
-
+def run_multibranch(data, DMEigs, DMEigvals, dm_eigs, start_cell, num_waypoints, knn=25, flock=2, n_jobs=1, voting_scheme='exponential', max_iterations=25):
     # # ################################################
     # # Sample waypoints
     print('Sampling and flocking waypoints...')
     start =time.time()
 
     # Append start cell
-    if isinstance(self.num_waypoints, int):
-        self.max_min_sampling(  )
-        self.waypoints = pd.Index(self.waypoints.difference([self.start_cell]).unique())
+    if isinstance(num_waypoints, int):
+        max_min_sampling(  )
+        waypoints = pd.Index(waypoints.difference([start_cell]).unique())
     else:
-        self.waypoints = self.num_waypoints
-    self.waypoints = pd.Index([self.start_cell]).append(self.waypoints)
+        waypoints = num_waypoints
+    waypoints = pd.Index([start_cell]).append(waypoints)
     end =time.time()
     print('Time for determining waypoints: {} minutes'.format((end - start)/60))
 
@@ -307,20 +306,20 @@ def run_multibranch(self):
     # Shortest path distances to determine trajectories
     print('Shortest path distances...')
     start =time.time()
-    nbrs = NearestNeighbors(n_neighbors=self.knn, 
-            metric='euclidean', n_jobs=self.n_jobs).fit(self.data) 
-    adj = nbrs.kneighbors_graph(self.data, mode='distance')
+    nbrs = NearestNeighbors(n_neighbors=knn, 
+            metric='euclidean', n_jobs=n_jobs).fit(data) 
+    adj = nbrs.kneighbors_graph(data, mode='distance')
 
     # Distances
-    dists = Parallel(n_jobs=self.n_jobs)(
-        delayed(self._shortest_path_helper)(np.where(self.data.index == cell)[0][0], adj) 
-            for cell in self.waypoints)
+    dists = Parallel(n_jobs=n_jobs)(
+        delayed(_shortest_path_helper)(np.where(data.index == cell)[0][0], adj) 
+            for cell in waypoints)
 
     # Convert to distance matrix
-    D = pd.DataFrame(0.0, index=self.waypoints, columns=self.data.index)
-    for i, cell in enumerate(self.waypoints):
+    D = pd.DataFrame(0.0, index=waypoints, columns=data.index)
+    for i, cell in enumerate(waypoints):
         D.loc[cell, :] = pd.Series( np.ravel(dists[i]), 
-            index=self.data.index[dists[i].index])[self.data.index]
+            index=data.index[dists[i].index])[data.index]
     end =time.time()
     print('Time for shortest paths: {} minutes'.format((end - start)/60))
 
@@ -330,18 +329,18 @@ def run_multibranch(self):
     # Distance matrix
     print('Determining perspectives, trajectory...')
     # Waypoint weights
-    W = Multibranch._weighting_scheme( D, self.voting_scheme )
+    W = Multibranch._weighting_scheme( D, voting_scheme )
 
     # Initalize trajectory to start cell distances
-    trajectory = D.loc[self.start_cell, :]
+    trajectory = D.loc[start_cell, :]
     converged = False
 
     # Iteratively update perspective and determine trajectory
     iteration = 1
-    while not converged and iteration < self.max_iterations:
+    while not converged and iteration < max_iterations:
         # Perspective matrix by alinging to start distances
         P = deepcopy(D)
-        for wp in self.waypoints[1:]:
+        for wp in waypoints[1:]:
             # Position of waypoints relative to start
             idx_val = trajectory[wp]
             
@@ -365,6 +364,7 @@ def run_multibranch(self):
         trajectory = new_traj
         iteration += 1
 
+### *** FIGURE OUT HOW TO RETURN RESULTS *** --> dictionary? ###
     self.trajectory = trajectory
     # return
 
