@@ -8,6 +8,7 @@ from matplotlib import font_manager
 from scipy.stats import gaussian_kde
 from cycler import cycler
 from sklearn.decomposition import PCA
+from mpl_toolkits.mplot3d import Axes3D
 
 try:
     os.environ['DISPLAY']
@@ -452,24 +453,24 @@ def scatter_gene_expression(data, genes, density=False, color=None, fig=None, ax
             idx = z.argsort()
             x, y, z = data[genes[0]][idx], data[genes[1]][idx], z[idx]
 
-            plt.scatter(x, y, s=size, c=z, edgecolors='none')
+            plt.scatter(x, y, s=size, c=z, edgecolors='none', cmap=cmap)
             ax.set_title('Color = density')
             plt.colorbar()
         elif isinstance(color, pd.Series):
             plt.scatter(data[genes[0]], data[genes[1]],
-                        s=size, c=color, edgecolors='none')
+                        s=size, c=color, edgecolors='none', cmap=cmap)
             if isinstance(color, str):
                 ax.set_title('Color = ' + color.name)
             plt.colorbar()
         elif color in data.columns.get_level_values(0):
             color = data.columns.values[np.where([color in col for col in data.columns.values])[0]][0]
             plt.scatter(data[genes[0]], data[genes[1]],
-                        s=size, c=data[color], edgecolors='none')
+                        s=size, c=data[color], edgecolors='none', cmap=cmap)
             ax.set_title('Color = ' + color)
             plt.colorbar()
         else:
             plt.scatter(data[genes[0]], data[genes[1]], edgecolors='none',
-                        s=size, color=qualitative_colors(2)[1] if color == None else color)
+                        s=size, color=qualitative_colors(2)[1] if color == None else color, cmap=cmap)
         ax.set_xlabel(genes[0][1])
         ax.set_ylabel(genes[1][1])
 
@@ -484,23 +485,23 @@ def scatter_gene_expression(data, genes, density=False, color=None, fig=None, ax
             density = kde(xyz)
 
             p = ax.scatter(data[genes[0]], data[genes[1]], data[genes[2]],
-                       s=size, c=density, edgecolors='none')
+                       s=size, c=density, edgecolors='none', cmap=cmap)
             ax.set_title('Color = density')
             fig.colorbar(p)
         elif isinstance(color, pd.Series):
             p = ax.scatter(data[genes[0]], data[genes[1]],
-                       data[genes[2]], s=size, c=color, edgecolors='none')
+                       data[genes[2]], s=size, c=color, edgecolors='none', cmap=cmap)
             ax.set_title('Color = ' + color.name)
             fig.colorbar(p)
         elif color in data.columns.get_level_values(0):
             color = data.columns.values[np.where([color in col for col in data.columns.values])[0]][0]
             p = ax.scatter(data[genes[0]], data[genes[1]],
-                       data[genes[2]], s=size, c=data[color], edgecolors='none')
+                       data[genes[2]], s=size, c=data[color], edgecolors='none', cmap=cmap)
             ax.set_title('Color = ' + color)
             fig.colorbar(p)
         else:
             p = ax.scatter(data[genes[0]], data[genes[1]], data[genes[2]], 
-                       edgecolors='none', s=size, color=qualitative_colors(2)[1] if color == None else color)
+                       edgecolors='none', s=size, color=qualitative_colors(2)[1] if color == None else color, cmap=cmap)
         ax.set_xlabel(genes[0][1])
         ax.set_ylabel(genes[1][1])
         ax.set_zlabel(genes[2][1])
