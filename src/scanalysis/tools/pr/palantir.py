@@ -1,7 +1,5 @@
 # palantir without Multibranch or scdata objects
 
-## needs a lot more fixing
-
 import numpy as np
 import pandas as pd
 import random
