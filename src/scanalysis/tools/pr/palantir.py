@@ -1,6 +1,7 @@
-"""
-A python object representing single cell data
-"""
+# palantir without Multibranch or scdata objects
+
+## needs a lot more fixing
+
 import numpy as np
 import pandas as pd
 import random
@@ -23,47 +24,23 @@ from scipy.stats import norm
 from scipy.cluster import hierarchy
 
 
-
-
-def __init__(self, scdata, dm_eigs, start_cell, num_waypoints,
-    knn=25, flock=2, n_jobs=1, voting_scheme='exponential', max_iterations=25):
-
-    # Initialize
-    self.scdata = scdata
-    self.knn = knn
-    self.n_jobs = n_jobs
-    self.num_waypoints = num_waypoints
-    self.flock = flock
-    self.voting_scheme = voting_scheme
-    self.max_iterations = max_iterations
-
-    # Multi scale distance
-    eig_vals = np.ravel(self.scdata.diffusion_eigenvalues.values[dm_eigs])
-    self.data = self.scdata.diffusion_eigenvalues.values[:, dm_eigs] * (eig_vals / (1-eig_vals))
-    self.data = pd.DataFrame( self.data, 
-        index=self.scdata.data.columns, columns=dm_eigs )
-
-    # Find start cell
-    self.start_cell = random.sample( start_cell  , 1)[0]
-
-    
-
-
 # Max min sampling of waypoints
-def max_min_sampling(self):
+def max_min_sampling(data, num_waypoints, knn, n_jobs, flock):
     
-    waypoint_set, waypoint_sampling_dim = Multibranch._max_min_worker(self.data, self.num_waypoints)
-
-    # Update object
-    self.waypoints = waypoint_set
-    self.waypoints_dim = waypoint_sampling_dim
-    self.waypoints_dim = pd.Series(self.waypoints_dim, index=self.waypoints)
+    waypoint_set, waypoint_sampling_dim = _max_min_worker(data, num_waypoints)
+    
+    # Update
+    waypoints = waypoint_set
+    waypoints_dim = pd.Series(waypoint_sampling_dim, index = waypoints)
+    
 
     # Flock waypoints if specified
-    self.flock_waypoints( flock=self.flock )
+  #  waypoints, waypoints_dim = flock_waypoints(data, waypoints, waypoints_dim, knn, n_jobs, flock )
+    
+    return waypoints, waypoints_dim
 
 
-def _max_min_worker(cls, data, num_waypoints):
+def _max_min_worker(data, num_waypoints):
     # Max min  sampling of landmarks
     waypoint_set = list()
     no_iterations = int((num_waypoints)/data.shape[1])
@@ -106,7 +83,7 @@ def _max_min_worker(cls, data, num_waypoints):
     return waypoint_set, waypoint_sampling_dim
 
 # Function to determine weights
-def _weighting_scheme(cls, D, voting_scheme):
+def _weighting_scheme(D, voting_scheme):
     if voting_scheme == 'uniform':
         W = pd.DataFrame(np.ones(D.shape), 
                 index = D.index, columns=D.columns)
@@ -129,31 +106,31 @@ def _weighting_scheme(cls, D, voting_scheme):
 
 
 
-def _stationary_distribution(self):
+def _stationary_distribution(data, waypoints, knn, n_jobs, trajectory):
     # kNN graph 
-    n_neighbors = self.knn
+    n_neighbors = knn
     nbrs = NearestNeighbors(n_neighbors=n_neighbors, metric='euclidean',
-        n_jobs=self.n_jobs).fit(self.data.loc[self.waypoints,:])
+        n_jobs=n_jobs).fit(data.loc[waypoints,:])
     # nbrs = NearestNeighbors(n_neighbors=self.knn, metric='cosine', algorithm='brute',
     #     n_jobs=1).fit(self.data.loc[self.waypoints,:])
-    kNN = nbrs.kneighbors_graph(self.data.loc[self.waypoints,:], mode='distance' ) 
-    dist,ind = nbrs.kneighbors(self.data.loc[self.waypoints,:])
+    kNN = nbrs.kneighbors_graph(data.loc[waypoints,:], mode='distance' ) 
+    dist,ind = nbrs.kneighbors(data.loc[waypoints,:])
 
     # Standard deviation allowing for "back" edges
     adaptive_std = np.ravel(dist[:, int(np.floor(n_neighbors / 3)) - 1])
 
     # Directed graph construction
     # Trajectory position of all the neighbors
-    traj_nbrs = pd.DataFrame(self.trajectory[np.ravel(self.waypoints[ind])].values.reshape( 
-        [len(self.waypoints), n_neighbors]), index=self.waypoints)
+    traj_nbrs = pd.DataFrame(trajectory[np.ravel(waypoints[ind])].values.reshape( 
+        [len(waypoints), n_neighbors]), index=waypoints)
 
     # Remove edges that move backwards in trajectory except for edges that are within 
     # the computed standard deviation
-    rem_edges = traj_nbrs.apply(lambda x : x < self.trajectory[traj_nbrs.index] - adaptive_std )
+    rem_edges = traj_nbrs.apply(lambda x : x < trajectory[traj_nbrs.index] - adaptive_std )
     rem_edges = rem_edges.stack()[rem_edges.stack()]
 
     # Determine the indices and update adjacency matrix
-    cell_mapping = pd.Series(range(len(self.waypoints)), index=self.waypoints)
+    cell_mapping = pd.Series(range(len(waypoints)), index=waypoints)
     x = list(cell_mapping[rem_edges.index.get_level_values(0)])
     y = list(rem_edges.index.get_level_values(1)) 
     # Update adjacecy matrix
@@ -163,72 +140,72 @@ def _stationary_distribution(self):
     x, y, z = find(kNN)
     aff = np.exp(-(z ** 2)/(adaptive_std[x] ** 2)  * 0.5 \
          -(z ** 2)/(adaptive_std[y] ** 2)  * 0.5 )
-    W = csr_matrix((aff, (x, y)), [len(self.waypoints), len(self.waypoints)])
+    W = csr_matrix((aff, (x, y)), [len(waypoints), len(waypoints)])
     # W = csr_matrix((1-z, (x, y)), [len(self.waypoints), len(self.waypoints)])
 
     # Probabilities
     D = np.ravel(W.sum(axis = 1))
     x, y, z = find(W)
-    T = csr_matrix(( z / D[x], (x, y)), [len(self.waypoints), len(self.waypoints)])
+    T = csr_matrix(( z / D[x], (x, y)), [len(waypoints), len(waypoints)])
 
     from scipy.sparse.linalg import eigs
     vals, vecs = eigs(T.T, 10)
 
     ranks = np.abs(np.real(vecs[:, np.argsort(vals)[-1]]))
-    ranks = pd.Series(ranks, index=self.waypoints)
+    ranks = pd.Series(ranks, index=waypoints)
 
     # Cutoff and intersection with the boundary cells
     cutoff = norm.ppf(0.9999, loc=np.median(ranks), 
         scale=np.median(np.abs((ranks - np.median(ranks)))))
-    dm_boundaries = pd.Index(set(self.data.idxmax()).union(self.data.idxmin()))
+    dm_boundaries = pd.Index(set(data.idxmax()).union(data.idxmin()))
     cells = (ranks.index[ ranks > cutoff].intersection( dm_boundaries ))
 
     # Clusters cells
-    Z = hierarchy.linkage(pairwise_distances(self.data.loc[cells,:]))
+    Z = hierarchy.linkage(pairwise_distances(data.loc[cells,:]))
     clusters = pd.Series(hierarchy.fcluster(Z, 1, 'distance'), index=cells)  
 
     # IDentify cells with maximum trajectory for each cluster
-    cells = self.trajectory[clusters.index].groupby(clusters).idxmax()
+    cells = trajectory[clusters.index].groupby(clusters).idxmax()
 
     return cells, ranks
 
 
 
-def _differentiation_entropy(self, boundary_cells=None):
+def _differentiation_entropy(data, waypoints, knn, n_jobs, start_cell, trajectory, boundary_cells=None):
 
     # Identify boundary cells
     if boundary_cells is None:
         print('Identifying end points...')
-        res = self._determine_end_points()
+        res = _determine_end_points(data, waypoints, knn, n_jobs, trajectory, start_cell)
         boundary_cells = res[0]
 
     # Markov chain construction
     print('Markov chain construction...')
 
     # kNN graph 
-    n_neighbors = self.knn
+    n_neighbors = knn
     nbrs = NearestNeighbors(n_neighbors=n_neighbors, metric='euclidean',
-        n_jobs=self.n_jobs).fit(self.data.loc[self.waypoints,:])
+        n_jobs=n_jobs).fit(data.loc[waypoints,:])
     # nbrs = NearestNeighbors(n_neighbors=self.knn, metric='cosine', algorithm='brute',
     #     n_jobs=1).fit(self.data.loc[self.waypoints,:])
-    kNN = nbrs.kneighbors_graph(self.data.loc[self.waypoints,:], mode='distance' ) 
-    dist,ind = nbrs.kneighbors(self.data.loc[self.waypoints,:])
+    kNN = nbrs.kneighbors_graph(data.loc[waypoints,:], mode='distance' ) 
+    dist,ind = nbrs.kneighbors(data.loc[waypoints,:])
 
     # Standard deviation allowing for "back" edges
     adaptive_std = np.ravel(dist[:, int(np.floor(n_neighbors / 3)) - 1])
 
     # Directed graph construction
     # Trajectory position of all the neighbors
-    traj_nbrs = pd.DataFrame(self.trajectory[np.ravel(self.waypoints[ind])].values.reshape( 
-        [len(self.waypoints), n_neighbors]), index=self.waypoints)
+    traj_nbrs = pd.DataFrame(trajectory[np.ravel(waypoints[ind])].values.reshape( 
+        [len(waypoints), n_neighbors]), index=waypoints)
 
     # Remove edges that move backwards in trajectory except for edges that are within 
     # the computed standard deviation
-    rem_edges = traj_nbrs.apply(lambda x : x < self.trajectory[traj_nbrs.index] - adaptive_std )
+    rem_edges = traj_nbrs.apply(lambda x : x < trajectory[traj_nbrs.index] - adaptive_std )
     rem_edges = rem_edges.stack()[rem_edges.stack()]
 
     # Determine the indices and update adjacency matrix
-    cell_mapping = pd.Series(range(len(self.waypoints)), index=self.waypoints)
+    cell_mapping = pd.Series(range(len(waypoints)), index=waypoints)
     x = list(cell_mapping[rem_edges.index.get_level_values(0)])
     y = list(rem_edges.index.get_level_values(1)) 
     # Update adjacecy matrix
@@ -238,17 +215,17 @@ def _differentiation_entropy(self, boundary_cells=None):
     x, y, z = find(kNN)
     aff = np.exp(-(z ** 2)/(adaptive_std[x] ** 2)  * 0.5 \
          -(z ** 2)/(adaptive_std[y] ** 2)  * 0.5 )
-    W = csr_matrix((aff, (x, y)), [len(self.waypoints), len(self.waypoints)])
+    W = csr_matrix((aff, (x, y)), [len(waypoints), len(waypoints)])
     # W = csr_matrix((1-z, (x, y)), [len(self.waypoints), len(self.waypoints)])
 
     # Probabilities
     D = np.ravel(W.sum(axis = 1))
     x, y, z = find(W)
-    T = csr_matrix(( z / D[x], (x, y)), [len(self.waypoints), len(self.waypoints)])
+    T = csr_matrix(( z / D[x], (x, y)), [len(waypoints), len(waypoints)])
 
 
     # Absorption states should not have outgoing edges
-    abs_states = np.where(self.waypoints.isin(boundary_cells))[0]
+    abs_states = np.where(waypoints.isin(boundary_cells))[0]
     # Reset absorption state affinities by Removing neigbors
     T[abs_states,:] = 0 
     # Diagnoals as 1s
@@ -259,7 +236,7 @@ def _differentiation_entropy(self, boundary_cells=None):
     # Fundamental matrix and absorption probabilities
     print('Computing fundamental matrix and absorption probabilities...')
     # Transition states
-    trans_states = list(set(range(len(self.waypoints))).difference(abs_states))
+    trans_states = list(set(range(len(waypoints))).difference(abs_states))
 
     # Q matrix
     Q = T[trans_states,:][:, trans_states]
@@ -270,8 +247,8 @@ def _differentiation_entropy(self, boundary_cells=None):
     # Absorption probabilities
     abs_probabilities = np.dot(N, T[trans_states,:][:, abs_states].todense())
     abs_probabilities = pd.DataFrame(abs_probabilities, 
-        index=self.waypoints[trans_states],
-        columns=self.waypoints[abs_states])
+        index=waypoints[trans_states],
+        columns=waypoints[abs_states])
     abs_probabilities[abs_probabilities < 0] = 0
 
     # Entropy
@@ -280,20 +257,26 @@ def _differentiation_entropy(self, boundary_cells=None):
     return ent, abs_probabilities
 
 
-def _shortest_path_helper(cls, cell, adj):
+def _shortest_path_helper(cell, adj):
     # NOTE: Graph construction is parallelized since constructing the graph outside was creating lock issues
     graph = nx.Graph(adj)
     return pd.Series(nx.single_source_dijkstra_path_length(graph, cell))
 
-def run_multibranch(data, DMEigs, DMEigvals, dm_eigs, start_cell, num_waypoints, knn=25, flock=2, n_jobs=1, voting_scheme='exponential', max_iterations=25):
+def run_multibranch(data_, DMEigs, DMEigVals, dm_eigs, start_cell, num_waypoints, knn=25, flock=2, n_jobs=1, voting_scheme='exponential', max_iterations=25):
     # # ################################################
+    
+    # Multi scale distance
+    eig_vals = np.ravel(DMEigVals.values[dm_eigs])
+    data = DMEigs.values[:, dm_eigs] * (eig_vals / (1-eig_vals))
+    data = pd.DataFrame( data, index=data_.columns, columns=dm_eigs )
+    
     # # Sample waypoints
     print('Sampling and flocking waypoints...')
     start =time.time()
 
     # Append start cell
     if isinstance(num_waypoints, int):
-        max_min_sampling(  )
+        waypoints, waypoints_dim = max_min_sampling( data, num_waypoints, knn, n_jobs, flock )
         waypoints = pd.Index(waypoints.difference([start_cell]).unique())
     else:
         waypoints = num_waypoints
@@ -329,7 +312,7 @@ def run_multibranch(data, DMEigs, DMEigvals, dm_eigs, start_cell, num_waypoints,
     # Distance matrix
     print('Determining perspectives, trajectory...')
     # Waypoint weights
-    W = Multibranch._weighting_scheme( D, voting_scheme )
+    W = _weighting_scheme( D, voting_scheme )
 
     # Initalize trajectory to start cell distances
     trajectory = D.loc[start_cell, :]
@@ -364,23 +347,20 @@ def run_multibranch(data, DMEigs, DMEigvals, dm_eigs, start_cell, num_waypoints,
         trajectory = new_traj
         iteration += 1
 
-### *** FIGURE OUT HOW TO RETURN RESULTS *** --> dictionary? ###
-    self.trajectory = trajectory
-    # return
-
     # Terminal states
     print('Determining terminal states...')
-    cells, _ = self._stationary_distribution()
+    cells, _ = _stationary_distribution(data, waypoints, knn, n_jobs, trajectory)
 
     # Entropy and branch probabilities
     print('Entropy and branch probabilities...')
-    ent, branch_probs = self._differentiation_entropy(cells)
+    ent, branch_probs = _differentiation_entropy(data, waypoints, knn, n_jobs, start_cell, trajectory, cells)
+    
     # Add terminals
-    ent = ent.append(pd.Series(0, index=cells))[self.trajectory.index]
+    ent = ent.append(pd.Series(0, index=cells))[trajectory.index]
     bp = pd.DataFrame(0, index=cells, columns=cells)
     bp.values[range(len(cells)), range(len(cells))] = 1
     branch_probs = branch_probs.append(bp.loc[:, branch_probs.columns])
-    branch_probs = branch_probs.loc[self.trajectory.index, :]
+    branch_probs = branch_probs.loc[trajectory.index, :]
 
     # Project results to all cells
     print('Project results to all cells...')
@@ -389,10 +369,14 @@ def run_multibranch(data, DMEigs, DMEigvals, dm_eigs, start_cell, num_waypoints,
     branch_probs = pd.DataFrame(np.dot(
         W.T, branch_probs.loc[W.index, :]), index=W.columns, columns=branch_probs.columns)
 
-    # UPdate object
-    self.entropy = ent
-    self.branch_probs = branch_probs
-    
+    # UPdate results into dictionary
+    res = {}
+    res['waypoints'] = waypoints
+    res['entropy'] = ent
+    res['branch_probs'] = branch_probs
+    res['trajectory'] = trajectory
+        
+    return res
 
 
 
@@ -762,7 +746,7 @@ def _adjust_branch_point(self, test_branch, nbr_branches, nw=5, diverging=True):
     return updated_branches
 
 # Function to add waypoints
-def _add_waypoints(self, add_waypoints=10):
+def _add_waypoints(branch_conn, trajectory, waypoints, waypoints_dim, flock, flock_waypoints, add_waypoints=10):
 
     # Initalize
     waypoints = pd.Series()
@@ -780,7 +764,7 @@ def _add_waypoints(self, add_waypoints=10):
         data = data.iloc[:, ~data.columns.duplicated()]
 
         # Determine waypoints
-        w, s = Multibranch._max_min_worker( data,  add_waypoints)
+        w, s = _max_min_worker( data,  add_waypoints)
         waypoints = waypoints.append( w.to_series() )
         waypoints_dim = waypoints_dim.append( s )
 
@@ -792,32 +776,34 @@ def _add_waypoints(self, add_waypoints=10):
 
 
 # Functions for flocking waypoints
-def _flock(cls, i, data, IDX, nbrs):
+def _flock(i, data, IDX, nbrs):
     med_data = np.median(data[IDX[i,:],:],axis=0)
     return nbrs.kneighbors(med_data.reshape(1, -1), n_neighbors=1, return_distance=False)[0][0]
 
-def flock_waypoints(self, flock=2):
+def flock_waypoints(data_, waypoints_, waypoints_dim, knn, n_jobs, flock=2):
 
     if flock == 0:
         return
 
     # Nearest neighbors
-    data = self.data.values
-    nbrs = NearestNeighbors(n_neighbors=self.knn, 
-            metric='euclidean', n_jobs=self.n_jobs).fit(data) 
+    data = data_.values
+    nbrs = NearestNeighbors(n_neighbors=knn, 
+            metric='euclidean', n_jobs=n_jobs).fit(data) 
 
     # Flock
-    waypoints = np.where( self.data.index.isin( self.waypoints ) )[0]
+    waypoints_ = np.where( data_.index.isin( waypoints_ ) )[0]
     for f in range(flock):
         IDX = nbrs.kneighbors([data[i, :] for i in waypoints], return_distance=False)
-        waypoints = Parallel(n_jobs=self.n_jobs)(
+        waypoints = Parallel(n_jobs=n_jobs)(
             delayed(Multibranch._flock)(i, data, IDX, nbrs) for i in range(len(waypoints)))
 
     # Remove duplicates
-    waypoints = self.scdata.data.columns[waypoints]
-    self.waypoints_dim = self.waypoints_dim.loc[~waypoints.duplicated()]
-    self.waypoints = waypoints[~waypoints.duplicated()]
-    self.waypoints_dim.index = self.waypoints
+    waypoints = data_.columns[waypoints]
+    waypoints_dim = waypoints_dim.loc[~waypoints.duplicated()]
+    waypoints = waypoints[~waypoints.duplicated()]
+    waypoints_dim.index = waypoints
+    
+    return waypoints, waypoints_dim
 
 
 def _determine_end_points_prev(self):
@@ -930,29 +916,29 @@ def  _page_rank(self):
 
 
 
-def _determine_end_points(self):
+def _determine_end_points(data, waypoints, knn, n_jobs, trajectory, start_cell):
 
     # Construct kNN graph of the waypoints
     print('Clustering...')
     # KMeans clustering        
-    n_clusters = self.data.shape[1] * 2
-    labels = pd.Series( KMeans(n_clusters = n_clusters).fit_predict(self.data.loc[self.waypoints, :]),
-        index=self.waypoints)
+    n_clusters = data.shape[1] * 2
+    labels = pd.Series( KMeans(n_clusters = n_clusters).fit_predict(data.loc[waypoints, :]),
+        index=waypoints)
 
     # Nearest neighbor graph
-    nn = NearestNeighbors(n_neighbors=self.knn, 
-            metric='euclidean', n_jobs=self.n_jobs).fit(self.data.loc[self.waypoints, :]) 
-    adj = nn.kneighbors_graph(self.data.loc[self.waypoints, :], mode='distance')
+    nn = NearestNeighbors(n_neighbors=knn, 
+            metric='euclidean', n_jobs=n_jobs).fit(data.loc[waypoints, :]) 
+    adj = nn.kneighbors_graph(data.loc[waypoints, :], mode='distance')
 
     # Boundary cells
-    boundary_cells = self.data.loc[self.waypoints].idxmin().append(
-        self.data.loc[self.waypoints].idxmax()).unique()
-    N = len(self.waypoints)
+    boundary_cells = data.loc[waypoints].idxmin().append(
+        data.loc[waypoints].idxmax()).unique()
+    N = len(waypoints)
 
     # Remove outgoing edges
     x, y, z = find(adj)
-    use_inds = np.where(np.ravel(self.trajectory[self.waypoints[x]]) < 
-        np.ravel(self.trajectory[self.waypoints[y]]))[0]
+    use_inds = np.where(np.ravel(trajectory[waypoints[x]]) < 
+        np.ravel(trajectory[waypoints[y]]))[0]
     adj = csr_matrix( (z[use_inds], (x[use_inds], y[use_inds])), shape=[N, N] )
 
 
@@ -961,7 +947,7 @@ def _determine_end_points(self):
     # Shortest paths between all boundary points
     wp_graph = nx.from_scipy_sparse_matrix(adj, create_using=nx.DiGraph())
     nx.relabel_nodes( wp_graph, 
-        dict(zip(range(N), self.waypoints)), copy=False)
+        dict(zip(range(N), waypoints)), copy=False)
 
     # Paths between all end cells
     paths = []
@@ -974,7 +960,7 @@ def _determine_end_points(self):
 
     # Cluster graph
     # Traverse through the paths adding directional edges
-    cluster_order = self.trajectory[self.waypoints].groupby(labels).mean()
+    cluster_order = trajectory[waypoints].groupby(labels).mean()
     cluster_graph = nx.DiGraph()
     for path in paths:
         # Add graph edges when labels are different
@@ -995,25 +981,25 @@ def _determine_end_points(self):
     # Corresponding waypoints
     end_points = []
     for c in end_clusters:
-        end_points = end_points + [ self.trajectory[labels.index[labels == c]].idxmax() ]
+        end_points = end_points + [ trajectory[labels.index[labels == c]].idxmax() ]
 
     # Multiple paths through the graph
     cluster_paths = dict()
     for c in end_points:
         paths = []
 
-        path = nx.dijkstra_path(cluster_graph, labels[self.start_cell], labels[c])
+        path = nx.dijkstra_path(cluster_graph, labels[start_cell], labels[c])
         paths = paths + [tuple(path)]
 
         # Clusters along the path
         # Remove each node to check presence of alternative path
         for cluster in path:
-            if cluster == labels[self.start_cell] or cluster == labels[c]:
+            if cluster == labels[start_cell] or cluster == labels[c]:
                 continue
             temp = deepcopy(cluster_graph)
             temp.remove_node(cluster)
             try:
-                alt_path = nx.dijkstra_path( temp, labels[self.start_cell], labels[c])
+                alt_path = nx.dijkstra_path( temp, labels[start_cell], labels[c])
             except nx.NetworkXNoPath:
                 # No alternative path
                 continue
