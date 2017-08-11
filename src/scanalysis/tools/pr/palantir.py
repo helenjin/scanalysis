@@ -394,8 +394,9 @@ def run_multibranch(data_, DMEigs, DMEigVals, dm_eigs, start_cell, num_waypoints
 
 
 
-
-
+def _flock(cls, i, data, IDX, nbrs):
+        med_data = np.median(data[IDX[i,:],:],axis=0)
+        return nbrs.kneighbors(med_data.reshape(1, -1), n_neighbors=1, return_distance=False)[0][0]
 
 def flock_waypoints(data_, waypoints_, waypoints_dim, knn, n_jobs, flock=2):
 
@@ -412,7 +413,7 @@ def flock_waypoints(data_, waypoints_, waypoints_dim, knn, n_jobs, flock=2):
     for f in range(flock):
         IDX = nbrs.kneighbors([data[i, :] for i in waypoints], return_distance=False)
         waypoints = Parallel(n_jobs=n_jobs)(
-            delayed(Multibranch._flock)(i, data, IDX, nbrs) for i in range(len(waypoints)))
+            delayed(_flock)(i, data, IDX, nbrs) for i in range(len(waypoints)))
 
     # Remove duplicates
     waypoints = data_.columns[waypoints]

@@ -16,12 +16,6 @@ import seaborn as sns
 import warnings
 
 import time
-import tqdm
-
-import rpy2.robjects as robjects
-from rpy2.robjects import pandas2ri, Formula
-from rpy2.robjects.packages import importr  
-pandas2ri.activate()
 
 
 
@@ -39,7 +33,7 @@ class DiffEntrResults(object):
 	# # Set up Rgam
 	# rgam = importr('gam')
 
-	def __init__(self, trajectory, branches, branch_prob, branch_conn, no_bins=500):
+	def __init__(self, trajectory, branches, branch_prob, no_bins=500):
 
 		# Initialize
 		self._trajectory = (trajectory - trajectory.min()) / (trajectory.max() - trajectory.min())
@@ -47,7 +41,6 @@ class DiffEntrResults(object):
 		self._branches = branches
 		self._branch_prob = branch_prob
 		self._branch_prob[self._branch_prob < 0.01] = 0
-		self._branch_conn = branch_conn
 		self._traj_bins = np.linspace(np.min(self.trajectory), np.max(self.trajectory), no_bins)
 
 
