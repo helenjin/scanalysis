@@ -8,12 +8,12 @@ from warnings import warn
 if sys.version_info.major != 3:
     raise RuntimeError('SCAnalysis requires Python 3')
 
-# install phenograph, GraphDiffusion, and joblib if pip3 is installed
+# install phenograph, GraphDiffusion, joblib, and tqdm if pip3 is installed
 if shutil.which('pip3'):
     call(['pip3', 'install', 'git+https://github.com/jacoblevine/phenograph.git'])
     call(['pip3', 'install', 'git+https://github.com/pkathail/GraphDiffusion.git'])
     call(['pip3', 'install', 'git+https://github.com/joblib/joblib.git'])
-
+    call(['pip3', 'install', 'git+https://github.com/tqdm/tqdm.git'])
 
 
 setup(name='SCAnalysis',
