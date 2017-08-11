@@ -1,5 +1,5 @@
 SCAnalysis
---------------
+------
 
 single cell analysis package
 combines MAGIC and Wishbone, with additional features (including Palantir)
@@ -8,14 +8,14 @@ combines MAGIC and Wishbone, with additional features (including Palantir)
 Wishbone is an algorithm to align single cells from differentiation systems with bifurcating branches. Wishbone has been designed to work with multidimensional single cell data from diverse technologies such as Mass cytometry and single cell RNA-seq.
 
 #### Installation and dependencies
-1. SCAnalysis has been implemented in Python3 and can be installed using
+1. SCAnalysis has been implemented in Python3 and can be installed using:
 
         $> git clone git://github.com/helenjin/scanalysis.git
         $> cd scanalysis
         $> sudo pip3 install .
 
-2. SCAnalysis depends on a number of `python3` packages available on pypi and these dependencies are listed in `setup.py`
-All the dependencies will be automatically installed using the above commands
+2. SCAnalysis depends on a number of `python3` packages available on pypi and these dependencies are listed in `setup.py`.
+All the dependencies will be automatically installed using the above commands.
 
 #### Usage
 ##### Interactive command line
