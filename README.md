@@ -9,7 +9,7 @@ Wishbone is an algorithm to align single cells from differentiation systems with
 
 #### Installation and dependencies
 1. SCAnalysis has been implemented in Python3 and can be installed using
- 
+
         $> git clone git://github.com/helenjin/scanalysis.git
         $> cd scanalysis
         $> sudo pip3 install .
@@ -17,9 +17,9 @@ Wishbone is an algorithm to align single cells from differentiation systems with
 2. SCAnalysis depends on a number of `python3` packages available on pypi and these dependencies are listed in `setup.py`
 All the dependencies will be automatically installed using the above commands
 
-
-#### Notebook
-see the notebook for more details:
+#### Usage
+#### Interactive command line
+A tutorial on SCAnalysis usage and results visualization for single cell RNA-seq data can be found in this notebook: 
 https://nbviewer.jupyter.org/github/helenjin/scanalysis/blob/master/notebooks/SCAnalysis.ipynb
 
 
