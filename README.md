@@ -18,7 +18,7 @@ Wishbone is an algorithm to align single cells from differentiation systems with
 All the dependencies will be automatically installed using the above commands
 
 #### Usage
-#### Interactive command line
+##### Interactive command line
 A tutorial on SCAnalysis usage and results visualization for single cell RNA-seq data can be found in this notebook: 
 https://nbviewer.jupyter.org/github/helenjin/scanalysis/blob/master/notebooks/SCAnalysis.ipynb
 
