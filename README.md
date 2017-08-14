@@ -22,6 +22,8 @@ All the dependencies will be automatically installed using the above commands.
 A tutorial on SCAnalysis usage and results visualization for single cell RNA-seq data can be found in this notebook: 
 https://nbviewer.jupyter.org/github/helenjin/scanalysis/blob/master/notebooks/SCAnalysis.ipynb
 
+##### GUI
+Unfortunately, a python GUI is currently not available for SCAnalysis. Updates to follow.
 
 #### Citations
 Setty M, Tadmor MD, Reich-Zeliger S, Angel O, Salame TM, Kathail P, Choi K, Bendall S, Friedman N, Pe’er D. "Wishbone identifies bifurcating developmental trajectories from single-cell data." Nat. Biotech. 2016 April 12. <http://dx.doi.org/10.1038/nbt.3569>
