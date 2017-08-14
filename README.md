@@ -28,7 +28,7 @@ Setty M, Tadmor MD, Reich-Zeliger S, Angel O, Salame TM, Kathail P, Choi K, Bend
 
 van Dijk, David, et al. "MAGIC: A diffusion-based imputation method reveals gene-gene interactions in single-cell RNA-sequencing data." BioRxiv (2017): 111591. <http://www.biorxiv.org/content/early/2017/02/25/111591>
 
-##### Source Code
+##### Original Source Code
 Wishbone: <http://github.com/ManuSetty/wishbone.git>
 
 MAGIC: <http://github.com/pkathail/magic.git>

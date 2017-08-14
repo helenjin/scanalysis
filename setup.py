@@ -12,8 +12,9 @@ if sys.version_info.major != 3:
 if shutil.which('pip3'):
     call(['pip3', 'install', 'git+https://github.com/jacoblevine/phenograph.git'])
     call(['pip3', 'install', 'git+https://github.com/pkathail/GraphDiffusion.git'])
-    call(['pip3', 'install', 'git+https://github.com/joblib/joblib.git'])
-    call(['pip3', 'install', 'git+https://github.com/tqdm/tqdm.git'])
+    call(['pip3', 'install', 'joblib'])
+    call(['pip3', 'install', 'tqdm'])
+    call(['pip3', 'install', 'rpy2'])
 
 
 setup(name='SCAnalysis',
@@ -36,8 +37,14 @@ setup(name='SCAnalysis',
           'networkx>=1.11',
           'fcsparser>=0.1.2',
           'statsmodels>=0.8.0',
-          'GraphDiffusion'
+          'GraphDiffusion',
+          'joblib',
+          'tqdm',
+          'rpy2'
       ],
+      
+     # also please make sure gam package is installed in R
+      
      scripts=['src/scanalysis/sca_gui.py'],
       )
 

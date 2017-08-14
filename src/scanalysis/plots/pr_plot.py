@@ -34,8 +34,8 @@ class DiffEntrResults(object):
 	"""
 	Container of multibranch results
 	"""
-	# # Set up Rgam
-	# rgam = importr('gam')
+	# Set up Rgam
+	rgam = importr('gam')
 
 	def __init__(self, trajectory, branches, branch_prob, no_bins=500):
 
