@@ -265,6 +265,7 @@ def run_multibranch(data_, DMEigs, DMEigVals, dm_eigs, start_cell, num_waypoints
     
     # Multi scale distance
     eig_vals = np.ravel(DMEigVals.values[dm_eigs])
+    data_  = pd.DataFrame.transpose(data_)
     data = DMEigs.values[:, dm_eigs] * (eig_vals / (1-eig_vals))
     data = pd.DataFrame( data, index=data_.columns, columns=dm_eigs )
     
