@@ -164,7 +164,7 @@ class DiffEntrResults(object):
 				trends = [res[i][0] for i in range(len(res))]
 				marker_trends[branch].loc[:, :] = np.ravel(trends).reshape([marker_data.shape[0], 
 					len(self.traj_bins)])
-				stds = [res[i][1] for i in range(len(res))]
+				# stds = [res[i][1] for i in range(len(res))]
 				marker_std[branch].loc[:, :] = np.ravel(trends).reshape([marker_data.shape[0], 
 					len(self.traj_bins)])
 			end = time.time()
@@ -187,7 +187,8 @@ class DiffEntrResults(object):
 				pass
 
 		if compute_std:
-			return marker_trends, marker_std
+			return marker_trends, marker_std   
+        
 		return marker_trends
 
 
