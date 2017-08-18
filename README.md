@@ -5,7 +5,9 @@ single cell analysis package
 combines MAGIC and Wishbone, with additional features (including Palantir)
 
 
-Wishbone is an algorithm to align single cells from differentiation systems with bifurcating branches. Wishbone has been designed to work with multidimensional single cell data from diverse technologies such as Mass cytometry and single cell RNA-seq. 
+* Wishbone is an algorithm to align single cells from differentiation systems with bifurcating branches. Wishbone has been designed to work with multidimensional single cell data from diverse technologies such as Mass cytometry and single cell RNA-seq. 
+
+* MAGIC (Markov-Affinity Based Graph Imputation of Cells) is an interactive tool to impute missing values in single-cell data and restore the structure of the data. It also provides data preprocessing functionality such as dimensionality reduction and gene expression visualization.
 
 #### Installation and dependencies
 1. SCAnalysis has been implemented in Python3 and can be installed using:
