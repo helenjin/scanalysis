@@ -1,7 +1,7 @@
 SCAnalysis
 ------
 
-single cell analysis package
+Single Cell Analysis package
 combines MAGIC and Wishbone, with additional features (including Palantir)
 
 
@@ -26,6 +26,9 @@ https://nbviewer.jupyter.org/github/helenjin/scanalysis/blob/master/notebooks/SC
 
 ##### GUI
 Unfortunately, a python GUI is currently not available for SCAnalysis. Updates to follow.
+However, it would be called on to run, like so:
+
+		$> python3 src/scanalysis/sca_gui.py
 
 #### Citations
 Setty M, Tadmor MD, Reich-Zeliger S, Angel O, Salame TM, Kathail P, Choi K, Bendall S, Friedman N, Pe’er D. "Wishbone identifies bifurcating developmental trajectories from single-cell data." Nat. Biotech. 2016 April 12. <http://dx.doi.org/10.1038/nbt.3569>
