@@ -164,7 +164,7 @@ class DiffEntrResults(object):
 				trends = [res[i][0] for i in range(len(res))]
 				marker_trends[branch].loc[:, :] = np.ravel(trends).reshape([marker_data.shape[0], 
 					len(self.traj_bins)])
-				# stds = [res[i][1] for i in range(len(res))]
+				stds = [res[i][1] for i in range(len(res))]
 				marker_std[branch].loc[:, :] = np.ravel(trends).reshape([marker_data.shape[0], 
 					len(self.traj_bins)])
 			end = time.time()
@@ -199,8 +199,11 @@ class DiffEntrResults(object):
 		# Marker trends and standard deviations
 		if branches is None:
 			branches = self.branch_prob.columns
-		marker_trends, marker_std = self.compute_marker_trends(marker_data, branches, True, n_jobs=1)
+		#marker_trends, marker_std = self.compute_marker_trends(marker_data, branches, True, n_jobs=1)
 
+		marker_trends = self.compute_marker_trends(marker_data, branches)
+		marker_std = deepcopy(marker_trends)
+        
 		# Generate colors
 		if colors is None:
 			colors = sns.color_palette('hls', len(branches))
