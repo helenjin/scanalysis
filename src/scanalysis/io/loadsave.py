@@ -16,12 +16,23 @@ def load(file):
     if (filename[len(filename)-4:] == ".csv"):
         try:
             df = pd.DataFrame.from_csv(filename)
-            print("Successfully loaded " + filename)
+            print("Successfully loaded " + filename + " as a pd.DataFrame object")
             return df
         except FileNotFoundError:
             print("Loading failed. Check that you've chosen the right .csv file")
             return
-
+        
+    # load data from pickle file
+    if (filename[len(filename)-2:] == ".p"):
+        try:
+            df = pd.read_pickle(filename)
+            print("Successfully loaded " + filename + " as a " + str(type(df)) + " object")
+            return df
+                
+        except FileNotFoundError:
+            print("Loading failed. Check that you've chosen the right .p file")
+            return
+        
     # load mass cytometry (mass-cyt) data from .fcs file
     if (filename[len(filename)-4:] == ".fcs"):
         try:
@@ -53,20 +64,7 @@ def load(file):
         except FileNotFoundError:
             print("Loading failed. Check that you've chosen the right .fcs file")
             return
-    
-    # load data from pickle file
-    if (filename[len(filename)-2:] == ".p"):
-        try:
-            df = pd.read_pickle(filename)
-            
-            #check to see if it is a pickled dataframe
-            if isinstance(df, pd.DataFrame):
-                print("Successfully loaded " + filename)
-                return df
-                
-        except FileNotFoundError:
-            print("Loading failed. Check that you've chosen the right .p file")
-            return
+   
         
         #sparse data in the mtx format or 10x format
         #if (filename[len(filename)-4:] == ".mtx"):
