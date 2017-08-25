@@ -30,6 +30,19 @@ warnings.filterwarnings(action="ignore", module="matplotlib", message="findfont"
 warnings.filterwarnings(action="ignore", module="pygam", message="divide by zero")
 
 
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore')  # catch experimental ipython widget warning
+    sns.set(context="paper", style='ticks', font_scale=1.5, font='Bitstream Vera Sans')
+cmap = matplotlib.cm.Spectral_r
+size = 8
+
+def qualitative_colors(n):
+    """ Generalte list of colors
+    :param n: Number of colors
+    """
+    return sns.color_palette('Set1', n)
+
+
 class DiffEntrResults(object):
 	"""
 	Container of multibranch results
@@ -46,6 +59,9 @@ class DiffEntrResults(object):
 		self._branch_prob = branch_prob
 		self._branch_prob[self._branch_prob < 0.01] = 0
 		self._traj_bins = np.linspace(np.min(self.trajectory), np.max(self.trajectory), no_bins)
+
+		self.branch_colors = dict( zip([2, 1, 3], qualitative_colors(3)))
+                                                       
 
 
 	# Getters and setters
@@ -227,3 +243,42 @@ class DiffEntrResults(object):
 			ax.legend(loc=2, bbox_to_anchor=(1, 1), fontsize=12)
 			ax.set_title(marker)
 		sns.despine()
+
+def plot_palantir_on_tsne(DiffEntrResults, tsne):
+    """ Plot Wishbone results on tSNE maps
+    """
+    
+    input("Please make sure that the tSNE data entered corresponds to the DiffEntrResults object you've entered.\n\
+    If yes, press enter to continue.\n\
+    If not, Ctrl-C to exit and retry with correct parameters.")
+    
+    # Please run Wishbone using run_wishbone before plotting #
+    # Please run tSNE before plotting #
+
+    # Set up figure
+    fig = plt.figure(figsize=[8, 4])
+    gs = plt.GridSpec(1, 2)
+
+    # Trajectory
+    ax = plt.subplot(gs[0, 0])
+    plt.scatter(tsne['x'], tsne['y'],
+        edgecolors='none', s=size, cmap=cmap, c=DiffEntrResults.trajectory)
+    ax.xaxis.set_major_locator(plt.NullLocator())
+    ax.yaxis.set_major_locator(plt.NullLocator())
+    plt.title('DiffEntrResults trajectory')
+    
+    if DiffEntrResults.branches is None:
+        DiffEntrResults.branches = DiffEntrResults.branch_prob.columns
+    # Branch
+    if DiffEntrResults.branches is not None:
+        s = True
+        if s:
+            ax = plt.subplot(gs[0, 1])
+            plt.scatter(tsne['x'], tsne['y'],
+                edgecolors='none', s=size, 
+                color=[DiffEntrResults.branch_colors[i] for i in DiffEntrResults.branches])
+            ax.xaxis.set_major_locator(plt.NullLocator())
+            ax.yaxis.set_major_locator(plt.NullLocator())
+            plt.title('Branch associations')
+    
+    return fig, ax
