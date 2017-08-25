@@ -268,6 +268,7 @@ def plot_tsne_by_cell_sizes(data, tsne, fig=None, ax=None, vmin=None, vmax=None)
     plt.colorbar()
     return fig, ax
 
+
 def plot_gene_expression(data, tsne, genes):
     """ Plot gene expression on tSNE maps
     :param genes: Iterable of strings to plot on tSNE
@@ -286,19 +287,22 @@ def plot_gene_expression(data, tsne, genes):
     # remove genes missing from experiment
     genes = set(genes).difference(not_in_dataframe)
 
-    height = int(2 * np.ceil(len(genes) / 5))
+    height = int(5 * np.ceil(len(genes) / 2))
     width = 10
     fig = plt.figure(figsize=[width, height+0.25])
-    n_rows = int(height / 2)
-    n_cols = int(width / 2)
+    n_rows = int(height / 5)
+    n_cols = 2
+    
+    fig = plt.figure(figsize=[width, (height+0.25)])
     gs = plt.GridSpec(n_rows, n_cols)
-
+    
     axes = []
     for i, g in enumerate(genes):
         ax = plt.subplot(gs[i // n_cols, i % n_cols])
         axes.append(ax)
-      #  if self.data_type == 'sc-seq':
-        plt.scatter(tsne['x'], tsne['y'], c=np.arcsinh(data[g]),
+        
+        color = data[g]
+        plt.scatter(tsne['x'], tsne['y'], c=color,
                     cmap=cmap, edgecolors='none', s=size)
        # else:
        #     plt.scatter(self.tsne['x'], self.tsne['y'], c=self.data[g],
@@ -306,7 +310,13 @@ def plot_gene_expression(data, tsne, genes):
         ax.set_title(g)
         ax.xaxis.set_major_locator(plt.NullLocator())
         ax.yaxis.set_major_locator(plt.NullLocator())
-
+        ax.set_xlabel('tSNE1')
+        ax.set_ylabel('tSNE2')
+        plt.colorbar()
+        plt.axis('tight')
+  
+    # should add part about other data
+    
     return fig, axes
 
 def plot_diffusion_components(tsne, diffusion_eigenvectors, diffusion_eigenvalues, title='Diffusion Components'):
@@ -435,8 +445,8 @@ def scatter_gene_expression(data, genes, density=False, color=None, fig=None, ax
     if len(genes) < 2 or len(genes) > 3:
         raise RuntimeError('Please specify either 2 or 3 genes to scatter.')
 
-    for i in range(len(genes)):
-        genes[i] = data.columns.values[np.where([genes[i] in col for col in data.columns.values])[0]][0]
+    #for i in range(len(genes)):
+     #   genes[i] = data.columns.values[np.where([genes[i] in col for col in data.columns.values])[0]][0]
 
     gui_3d_flag = True
     if ax == None:
@@ -471,8 +481,8 @@ def scatter_gene_expression(data, genes, density=False, color=None, fig=None, ax
         else:
             plt.scatter(data[genes[0]], data[genes[1]], edgecolors='none',
                         s=size, color=qualitative_colors(2)[1] if color == None else color, cmap=cmap)
-        ax.set_xlabel(genes[0][1])
-        ax.set_ylabel(genes[1][1])
+        ax.set_xlabel(genes[0])
+        ax.set_ylabel(genes[1])
 
     else:
         if not gui_3d_flag:
@@ -502,9 +512,9 @@ def scatter_gene_expression(data, genes, density=False, color=None, fig=None, ax
         else:
             p = ax.scatter(data[genes[0]], data[genes[1]], data[genes[2]], 
                        edgecolors='none', s=size, color=qualitative_colors(2)[1] if color == None else color, cmap=cmap)
-        ax.set_xlabel(genes[0][1])
-        ax.set_ylabel(genes[1][1])
-        ax.set_zlabel(genes[2][1])
+        ax.set_xlabel(genes[0])
+        ax.set_ylabel(genes[1])
+        ax.set_zlabel(genes[2])
         ax.view_init(15,55)
     
     plt.axis('tight')
