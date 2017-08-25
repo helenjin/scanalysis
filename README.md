@@ -20,6 +20,7 @@ combines MAGIC and Wishbone, with additional features (including Palantir)
 All the dependencies will be automatically installed using the above commands.
 
 3. To uninstall:
+		
 		$> sudo -H pip3 uninstall scanalysis
 
 #### Usage
