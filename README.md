@@ -14,10 +14,13 @@ combines MAGIC and Wishbone, with additional features (including Palantir)
 
         $> git clone git://github.com/helenjin/scanalysis.git
         $> cd scanalysis
-        $> sudo pip3 install .
+        $> sudo -H pip3 install .
 
 2. SCAnalysis depends on a number of `python3` packages available on pypi and these dependencies are listed in `setup.py`.
 All the dependencies will be automatically installed using the above commands.
+
+3. To uninstall:
+		$> sudo -H pip3 uninstall scanalysis
 
 #### Usage
 ##### Interactive command line
@@ -26,9 +29,9 @@ https://nbviewer.jupyter.org/github/helenjin/scanalysis/blob/master/notebooks/SC
 
 ##### GUI
 Unfortunately, a python GUI is currently not available for SCAnalysis. Updates to follow.
-However, it would be called on to run, like so:
+However, it would be invoked, like so:
 
-		$> python3 src/scanalysis/sca_gui.py
+		$> sca_gui.py
 
 #### Citations
 Setty M, Tadmor MD, Reich-Zeliger S, Angel O, Salame TM, Kathail P, Choi K, Bendall S, Friedman N, Pe’er D. "Wishbone identifies bifurcating developmental trajectories from single-cell data." Nat. Biotech. 2016 April 12. <http://dx.doi.org/10.1038/nbt.3569>
