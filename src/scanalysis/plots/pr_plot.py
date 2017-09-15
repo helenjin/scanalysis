@@ -61,7 +61,6 @@ class DiffEntrResults(object):
 		self._traj_bins = np.linspace(np.min(self.trajectory), np.max(self.trajectory), no_bins)
 
 		self.branch_colors = dict( zip([2, 1, 3], qualitative_colors(3)))
-                                                       
 
 
 	# Getters and setters
@@ -146,18 +145,19 @@ class DiffEntrResults(object):
 
 
 	def compute_marker_trends(self, marker_data, branches=None, compute_std=False, n_jobs=-1):
-
+        # marker_data is cells x genes (rows by columns)
+        
 		# Link for computing standard errors of the predicted values
 		# http://www.stat.wisc.edu/courses/st572-larget/Spring2007/handouts03-1.pdf
-
-		# Compute for all branches if branch is not speicified
+        
+		# Compute for all branches if branch is not specified
 		if branches is None:
 			branches = self.branch_prob.columns
 
 		# Results Container
 		marker_trends = OrderedDict()
 		for branch in branches:
-			marker_trends[branch] = pd.DataFrame(0.0, index=marker_data.index, columns=self.traj_bins)
+			marker_trends[branch] = pd.DataFrame(0.0, index=marker_data.columns, columns=self.traj_bins)
 		if compute_std:
 			marker_std = deepcopy(marker_trends)
 
@@ -167,21 +167,21 @@ class DiffEntrResults(object):
 			start = time.time()
 
 			# Branch cells and weights
-			weights = self.branch_prob.loc[marker_data.columns, branch]
+			weights = self.branch_prob.loc[marker_data.index, branch]
 			res = Parallel(n_jobs=n_jobs)(
-				delayed(self._marker_trends_helper)(marker_data.loc[gene,:], weights, compute_std)
-				for gene in marker_data.index)
+				delayed(self._marker_trends_helper)(marker_data.loc[:,gene], weights, compute_std)
+				for gene in marker_data.columns)
 
 			# Fill in the matrices
 			if not compute_std:
-				marker_trends[branch].loc[:, :] = np.ravel(res).reshape([marker_data.shape[0], 
+				marker_trends[branch].loc[:, :] = np.ravel(res).reshape([marker_data.shape[1], 
 					len(self.traj_bins)])
 			else:
 				trends = [res[i][0] for i in range(len(res))]
-				marker_trends[branch].loc[:, :] = np.ravel(trends).reshape([marker_data.shape[0], 
+				marker_trends[branch].loc[:, :] = np.ravel(trends).reshape([marker_data.shape[1], 
 					len(self.traj_bins)])
 				stds = [res[i][1] for i in range(len(res))]
-				marker_std[branch].loc[:, :] = np.ravel(trends).reshape([marker_data.shape[0], 
+				marker_std[branch].loc[:, :] = np.ravel(trends).reshape([marker_data.shape[1], 
 					len(self.traj_bins)])
 			end = time.time()
 			print('Time for processing {}: {} minutes'.format(branch, (end-start)/60))
@@ -194,10 +194,10 @@ class DiffEntrResults(object):
 
 				# Adjust expression
 				marker_trends[branch].iloc[:, max_traj_bin:] = \
-					marker_trends[branch].iloc[:, max_traj_bin-1].values.reshape([marker_data.shape[0], 1])
+					marker_trends[branch].iloc[:, max_traj_bin-1].values.reshape([marker_data.shape[1], 1])
 				if compute_std:
 					marker_std[branch].iloc[:, max_traj_bin:] = \
-						marker_std[branch].iloc[:, max_traj_bin-1].values.reshape([marker_data.shape[0], 1])
+						marker_std[branch].iloc[:, max_traj_bin-1].values.reshape([marker_data.shape[1], 1])
 			except IndexError:
 				# Indicates branch extends to the end, so do nothing
 				pass
@@ -211,7 +211,8 @@ class DiffEntrResults(object):
 
 
 	def plot_markers(self, marker_data, branches=None, colors=None):
-
+        # marker_data is cells x genes (rows by columns)
+        
 		# Marker trends and standard deviations
 		if branches is None:
 			branches = self.branch_prob.columns
@@ -226,9 +227,9 @@ class DiffEntrResults(object):
 			colors = pd.Series(list(colors), index=branches)
 
 		# Separate panel for each marker
-		fig = plt.figure(figsize=[10, 4 * marker_data.shape[0]])
-		for i, marker in enumerate(marker_data.index):
-			ax = fig.add_subplot(marker_data.shape[0], 1, i+1)
+		fig = plt.figure(figsize=[10, 4 * marker_data.shape[1]])
+		for i, marker in enumerate(marker_data.columns):
+			ax = fig.add_subplot(marker_data.shape[1], 1, i+1)
 
 			# Plot each branch 
 			for branch in branches:
@@ -244,41 +245,41 @@ class DiffEntrResults(object):
 			ax.set_title(marker)
 		sns.despine()
 
-def plot_palantir_on_tsne(DiffEntrResults, tsne):
-    """ Plot Wishbone results on tSNE maps
-    """
-    
-    input("Please make sure that the tSNE data entered corresponds to the DiffEntrResults object you've entered.\n\
-    If yes, press enter to continue.\n\
-    If not, Ctrl-C to exit and retry with correct parameters.")
-    
-    # Please run Wishbone using run_wishbone before plotting #
-    # Please run tSNE before plotting #
+	def plot_palantir_on_tsne(self, tsne):
+	    """ Plot Palantir results on tSNE maps
+	    """
+	    
+	    input("Please make sure that the tSNE data entered corresponds to the DiffEntrResults object you've entered.\n\
+	    If yes, press enter to continue.\n\
+	    If not, Ctrl-C to exit and retry with correct parameters.")
+	    
+	    # Please run Wishbone using run_wishbone before plotting #
+	    # Please run tSNE before plotting #
 
-    # Set up figure
-    fig = plt.figure(figsize=[8, 4])
-    gs = plt.GridSpec(1, 2)
+	    # Set up figure
+	    fig = plt.figure(figsize=[8, 4])
+	    gs = plt.GridSpec(1, 2)
 
-    # Trajectory
-    ax = plt.subplot(gs[0, 0])
-    plt.scatter(tsne['x'], tsne['y'],
-        edgecolors='none', s=size, cmap=cmap, c=DiffEntrResults.trajectory)
-    ax.xaxis.set_major_locator(plt.NullLocator())
-    ax.yaxis.set_major_locator(plt.NullLocator())
-    plt.title('DiffEntrResults trajectory')
-    
-    if DiffEntrResults.branches is None:
-        DiffEntrResults.branches = DiffEntrResults.branch_prob.columns
-    # Branch
-    if DiffEntrResults.branches is not None:
-        s = True
-        if s:
-            ax = plt.subplot(gs[0, 1])
-            plt.scatter(tsne['x'], tsne['y'],
-                edgecolors='none', s=size, 
-                color=[DiffEntrResults.branch_colors[i] for i in DiffEntrResults.branches])
-            ax.xaxis.set_major_locator(plt.NullLocator())
-            ax.yaxis.set_major_locator(plt.NullLocator())
-            plt.title('Branch associations')
-    
-    return fig, ax
+	    # Trajectory
+	    ax = plt.subplot(gs[0, 0])
+	    plt.scatter(tsne['x'], tsne['y'],
+	        edgecolors='none', s=size, cmap=cmap, c=self.trajectory)
+	    ax.xaxis.set_major_locator(plt.NullLocator())
+	    ax.yaxis.set_major_locator(plt.NullLocator())
+	    plt.title('DiffEntrResults trajectory')
+	    
+	    if self.branches is None:
+	        self.branches = self.branch_prob.columns
+	    # Branch
+	    if self.branches is not None:
+	        s = True
+	        if s:
+	            ax = plt.subplot(gs[0, 1])
+	            plt.scatter(tsne['x'], tsne['y'],
+	                edgecolors='none', s=size, 
+	                color=[self.branch_colors[i] for i in self.branches])
+	            ax.xaxis.set_major_locator(plt.NullLocator())
+	            ax.yaxis.set_major_locator(plt.NullLocator())
+	            plt.title('Branch associations')
+	    
+	    return fig, ax
