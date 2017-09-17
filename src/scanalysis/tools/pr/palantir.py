@@ -21,6 +21,7 @@ import time
 from scipy.stats import norm  
 from scipy.cluster import hierarchy
 
+from scanalysis.plots.pr_plot import DiffEntrResults
 
 # Max min sampling of waypoints
 def max_min_sampling(data, num_waypoints, knn, n_jobs, flock):
@@ -367,12 +368,14 @@ def run_multibranch(data_, DMEigs, DMEigVals, dm_eigs, start_cell, num_waypoints
     branch_probs = pd.DataFrame(np.dot(
         W.T, branch_probs.loc[W.index, :]), index=W.columns, columns=branch_probs.columns)
 
-    # UPdate results into dictionary
-    res = {}
-    res['waypoints'] = waypoints
-    res['entropy'] = ent
-    res['branch_probs'] = branch_probs
-    res['trajectory'] = trajectory
+    # UPdate results into DiffEntrResults class object
+    res = DiffEntrResults(trajectory, None, branch_probs)
+   
+    #from previous design:
+    #res['waypoints'] = waypoints
+    #res['entropy'] = ent
+    #res['branch_probs'] = branch_probs
+    #res['trajectory'] = trajectory
         
     return res
 
@@ -391,7 +394,7 @@ def run_multibranch(data_, DMEigs, DMEigVals, dm_eigs, start_cell, num_waypoints
 
 
 
-
+###
 
 
 def _flock(cls, i, data, IDX, nbrs):
