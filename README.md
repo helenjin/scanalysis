@@ -9,6 +9,8 @@ combines MAGIC and Wishbone, with additional features (including Palantir)
 
 * MAGIC (Markov-Affinity Based Graph Imputation of Cells) is an interactive tool to impute missing values in single-cell data and restore the structure of the data. It also provides data preprocessing functionality such as dimensionality reduction and gene expression visualization.
 
+* Palantir
+
 #### Installation and dependencies
 1. SCAnalysis has been implemented in Python3 and can be installed using:
 
