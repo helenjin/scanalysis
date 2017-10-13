@@ -47,15 +47,15 @@ class DiffEntrResults(object):
 	"""
 	Container of multibranch results
 	"""
-	# Set up Rgam
+	# Set up Rgam - alternatively, you can install.packages("gam") in R
 	rgam = importr('gam')
 
-	def __init__(self, trajectory, branches, branch_prob, no_bins=500):
+	def __init__(self, trajectory, ent, branch_prob, no_bins=500):
 
 		# Initialize
 		self._trajectory = (trajectory - trajectory.min()) / (trajectory.max() - trajectory.min())
 		self._trajectory = self._trajectory.sort_values()
-		self._branches = branches
+		self._entropy = ent
 		self._branch_prob = branch_prob
 		self._branch_prob[self._branch_prob < 0.01] = 0
 		self._traj_bins = np.linspace(np.min(self.trajectory), np.max(self.trajectory), no_bins)
@@ -73,8 +73,8 @@ class DiffEntrResults(object):
 		self._trajectory = trajectory
 
 	@property
-	def branches(self):
-		return self._branches
+	def entropy(self):
+		return self._entropy
 
 	@property
 	def branch_prob(self):
