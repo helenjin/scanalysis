@@ -31,16 +31,22 @@ warnings.filterwarnings(action="ignore", module="pygam", message="divide by zero
 
 
 with warnings.catch_warnings():
-    warnings.simplefilter('ignore')  # catch experimental ipython widget warning
-    sns.set(context="paper", style='ticks', font_scale=1.5, font='Bitstream Vera Sans')
+	warnings.simplefilter('ignore')  # catch experimental ipython widget warning
+	sns.set(context="paper", style='ticks', font_scale=1.5, font='Bitstream Vera Sans')
 cmap = matplotlib.cm.Spectral_r
 size = 8
 
+
+import phenograph
+
+from sklearn.preprocessing import StandardScaler
+
+
 def qualitative_colors(n):
-    """ Generalte list of colors
-    :param n: Number of colors
-    """
-    return sns.color_palette('Set1', n)
+	""" Generalte list of colors
+	:param n: Number of colors
+	"""
+	return sns.color_palette('Set1', n)
 
 
 class DiffEntrResults(object):
@@ -50,47 +56,36 @@ class DiffEntrResults(object):
 	# Set up Rgam - alternatively, you can install.packages("gam") in R
 	rgam = importr('gam')
 
-	def __init__(self, trajectory, ent, branch_prob, no_bins=500):
+	def __init__(self, trajectory, entropy, branch_prob, no_bins=500):
 
 		# Initialize
-		self._trajectory = (trajectory - trajectory.min()) / (trajectory.max() - trajectory.min())
-		self._trajectory = self._trajectory.sort_values()
-		self._entropy = ent
-		self._branch_prob = branch_prob
-		self._branch_prob[self._branch_prob < 0.01] = 0
-		self._traj_bins = np.linspace(np.min(self.trajectory), np.max(self.trajectory), no_bins)
+		self.trajectory = (trajectory - trajectory.min()) / (trajectory.max() - trajectory.min())
+		self.trajectory = self.trajectory.sort_values()
+		self.entropy = entropy
+		self.branch_prob = branch_prob
+		self.branch_prob[self.branch_prob < 0.01] = 0
+		self.traj_bins = np.linspace(np.min(self.trajectory), np.max(self.trajectory), no_bins)
 
 		self.branch_colors = dict( zip([2, 1, 3], qualitative_colors(3)))
 
 
 	# Getters and setters
-	@property
-	def trajectory(self):
-		return self._trajectory
-
-	@trajectory.setter
-	def trajectory(self, trajectory):
-		self._trajectory = trajectory
 
 	@property
 	def entropy(self):
-		return self._entropy
+		return self.entropy
 
 	@property
 	def branch_prob(self):
-		return self._branch_prob
-
-	@property
-	def branch_conn(self):
-		return self._branch_conn
+		return self.branch_prob
 
 	@property 
 	def traj_bins(self):
-		return self._traj_bins
+		return self.traj_bins
 
 	@traj_bins.setter
 	def traj_bins(self, traj_bins):
-		self._traj_bins = traj_bins
+		self.traj_bins = traj_bins
 
 	@classmethod
 	def load(cls, pkl_file):
@@ -98,7 +93,7 @@ class DiffEntrResults(object):
 			data = pickle.load(f)
 
 		# Set up object
-		mbr = cls(data['_trajectory'], data['_branches'], data['_branch_prob'], data['_branch_conn'])
+		mbr = cls(data['_entropy'], data['_branch_prob'], data['_branch_conn'])
 		return mbr
 
 	def save(self, pkl_file: str):
@@ -143,13 +138,13 @@ class DiffEntrResults(object):
 
 		return y_gam
 
-
+	
 	def compute_marker_trends(self, marker_data, branches=None, compute_std=False, n_jobs=-1):
-        # marker_data is cells x genes (rows by columns)
-        
+		# marker_data is cells x genes (rows by columns)
+		
 		# Link for computing standard errors of the predicted values
 		# http://www.stat.wisc.edu/courses/st572-larget/Spring2007/handouts03-1.pdf
-        
+		
 		# Compute for all branches if branch is not specified
 		if branches is None:
 			branches = self.branch_prob.columns
@@ -204,15 +199,15 @@ class DiffEntrResults(object):
 
 		if compute_std:
 			return marker_trends, marker_std   
-        
+		
 		return marker_trends
 
 
 
 
 	def plot_markers(self, marker_data, branches=None, colors=None):
-        # marker_data is cells x genes (rows by columns)
-        
+		# marker_data is cells x genes (rows by columns)
+		
 		# Marker trends and standard deviations
 		if branches is None:
 			branches = self.branch_prob.columns
@@ -220,7 +215,7 @@ class DiffEntrResults(object):
 
 		marker_trends = self.compute_marker_trends(marker_data, branches)
 		marker_std = deepcopy(marker_trends)
-        
+		
 		# Generate colors
 		if colors is None:
 			colors = sns.color_palette('hls', len(branches))
@@ -244,42 +239,96 @@ class DiffEntrResults(object):
 			ax.legend(loc=2, bbox_to_anchor=(1, 1), fontsize=12)
 			ax.set_title(marker)
 		sns.despine()
+	
+	
+	
+	def plot_clusters_of_gene_trends(self, marker_data, genes, branches=None):
+		# marker_data is cells x genes (rows by columns)
+		# genes is a list of genes we are specifically interested in
+		
+		if branches is None:
+			branches = self.branch_prob.columns
+		
+		# Isolate specified genes in marker_data
+		data = marker_data.loc[:,genes]
+		
+		# Compute trends for given genes and branch
+		trends = self.compute_marker_trends(data, branches)
+		
+		# Z-transform trends for genes
+		scaler = StandardScaler()
+		trends = scaler.fit_transform(trends)
+		
+		# Use phenograph to cluster trends? --> this assigns each gene to a specific cluster
+		# first need to make sure rows are genes, so need to transpose
+		# remember: For a dataset of N rows, communities will be a length N vector of integers specifying a community assignment for each row in the data. Any rows assigned -1 were identified as outliers and should not be considered as a member of any community.
+		trends = np.transpose(trends)
+		communities, graph, Q = phenograph.cluster(trends)
+		
+		# Plot trends of each cluster, and show standard deviations
+		# (grey = actual trends, blue = mean, dotted blue = standard deviations)
+		#g = graph.toarray() # genes x cells (row x col)
+		clusters = np.unique(communities)
+		
+		#fig, axes = plt.subplots(rows = n-n//2, columns = n//2)
+		fig = plt.figure()
+		
+		for c in clusters:
+			ax = fig.add_subplot(2, 2, c+1)
+			axes.add(ax)
+			
+			indices = [i for i, x in enumerate(communities) if x == c]
+			relevant_trends = np.take(trends, indices)
+			for i in relevant_trends.index:
+				# the x axis are the bins, in this case it's the columns of the trends we're interested in
+				plt.plot(relevant_trends.columns, relevant_trends.index(i))
+			plt.title('Cluster ' + c)
+		
+		#plt.show()
+		
+		return fig, ax
 
-	def plot_palantir_on_tsne(self, tsne):
-	    """ Plot Palantir results on tSNE maps
-	    """
-	    
-	    input("Please make sure that the tSNE data entered corresponds to the DiffEntrResults object you've entered.\n\
-	    If yes, press enter to continue.\n\
-	    If not, Ctrl-C to exit and retry with correct parameters.")
-	    
-	    # Please run Wishbone using run_wishbone before plotting #
-	    # Please run tSNE before plotting #
+			
+		
+	def plot_palantir_on_tsne(self, tsne, branches=None):
+		""" Plot Palantir results on tSNE maps
+		"""
+		
+		input("Please make sure that the tSNE data entered corresponds to the DiffEntrResults object you've entered.\n\
+		If yes, press enter to continue.\n\
+		If not, Ctrl-C to exit and retry with correct parameters.")
+		
+		
+		# Please run Palantir using run_multibranch before plotting #
+		# Please run tSNE before plotting #
 
-	    # Set up figure
-	    fig = plt.figure(figsize=[8, 4])
-	    gs = plt.GridSpec(1, 2)
-
-	    # Trajectory
-	    ax = plt.subplot(gs[0, 0])
-	    plt.scatter(tsne['x'], tsne['y'],
-	        edgecolors='none', s=size, cmap=cmap, c=self.trajectory)
-	    ax.xaxis.set_major_locator(plt.NullLocator())
-	    ax.yaxis.set_major_locator(plt.NullLocator())
-	    plt.title('DiffEntrResults trajectory')
-	    
-	    if self.branches is None:
-	        self.branches = self.branch_prob.columns
-	    # Branch
-	    if self.branches is not None:
-	        s = True
-	        if s:
-	            ax = plt.subplot(gs[0, 1])
-	            plt.scatter(tsne['x'], tsne['y'],
-	                edgecolors='none', s=size, 
-	                color=[self.branch_colors[i] for i in self.branches])
-	            ax.xaxis.set_major_locator(plt.NullLocator())
-	            ax.yaxis.set_major_locator(plt.NullLocator())
-	            plt.title('Branch associations')
-	    
-	    return fig, ax
+		# tsne maps of 1. trajectory, 2. differentiation, 3. branch probabilities
+		# look at wishbone tSNE function as a reference
+		
+		# Set up figure
+		fig = plt.figure(figsize=[8, 4])
+		gs = plt.GridSpec(1, 2)
+		
+		# Trajectory
+		ax = plt.subplot(gs[0, 0])
+		plt.scatter(tsne['x'], tsne['y'],
+			edgecolors='none', s=size, cmap=cmap, c=self.trajectory)
+		ax.xaxis.set_major_locator(plt.NullLocator())
+		ax.yaxis.set_major_locator(plt.NullLocator())
+		plt.title('DiffEntrResults trajectory')
+		
+		if branches is None:
+			branches = self.branch_prob.columns
+		# Branch
+		if branches is not None:
+			s = True
+			if s:
+				ax = plt.subplot(gs[0, 1])
+				plt.scatter(tsne['x'], tsne['y'],
+					edgecolors='none', s=size, 
+					color=[self.branch_colors[i] for i in branches])
+				ax.xaxis.set_major_locator(plt.NullLocator())
+				ax.yaxis.set_major_locator(plt.NullLocator())
+				plt.title('Branch associations')
+		
+		return fig, ax
