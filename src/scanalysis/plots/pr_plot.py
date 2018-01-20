@@ -54,50 +54,20 @@ class DiffEntrResults(object):
 	Container of multibranch results
 	"""
 	# Set up Rgam - alternatively, you can install.packages("gam") in R
-	rgam = importr('gam')
+	# rgam = importr('gam')
 
 	def __init__(self, trajectory, entropy, branch_prob, no_bins=500):
 
 		# Initialize
 		self.trajectory = (trajectory - trajectory.min()) / (trajectory.max() - trajectory.min())
-		self.trajectory = self.trajectory.sort_values()
+		#self.trajectory = self.trajectory.sort_values()
 		self.entropy = entropy
 		self.branch_prob = branch_prob
 		self.branch_prob[self.branch_prob < 0.01] = 0
 		self.traj_bins = np.linspace(np.min(self.trajectory), np.max(self.trajectory), no_bins)
 
-		self.branch_colors = dict( zip([2, 1, 3], qualitative_colors(3)))
+		self.branch_colors = dict( zip([2, 1, 3], qualitative_colors(3)) )
 
-
-	# Getters and setters
-
-	@property
-	def entropy(self):
-		return self.entropy
-
-	@property
-	def branch_prob(self):
-		return self.branch_prob
-
-	@property 
-	def traj_bins(self):
-		return self.traj_bins
-
-	@traj_bins.setter
-	def traj_bins(self, traj_bins):
-		self.traj_bins = traj_bins
-
-	@classmethod
-	def load(cls, pkl_file):
-		with open(pkl_file, 'rb') as f:
-			data = pickle.load(f)
-
-		# Set up object
-		mbr = cls(data['_entropy'], data['_branch_prob'], data['_branch_conn'])
-		return mbr
-
-	def save(self, pkl_file: str):
-		pickle.dump(vars(self), pkl_filet)
 
 
 	## ############# HELPER FUNCTIONS
@@ -242,13 +212,11 @@ class DiffEntrResults(object):
 	
 	
 	
-	def plot_clusters_of_gene_trends(self, marker_data, genes, branches=None):
+	def plot_clusters_of_gene_trends(self, marker_data, genes, branch):
 		# marker_data is cells x genes (rows by columns)
 		# genes is a list of genes we are specifically interested in
 		
-		if branches is None:
-			branches = self.branch_prob.columns
-		
+		branches = self.branch_prob.columns
 		# Isolate specified genes in marker_data
 		data = marker_data.loc[:,genes]
 		
@@ -257,41 +225,61 @@ class DiffEntrResults(object):
 		
 		# Z-transform trends for genes
 		scaler = StandardScaler()
-		trends = scaler.fit_transform(trends)
 		
+		trends = scaler.fit_transform(trends[branch])
+		# note that trends[branch] is a pandas dataframe with rows as genes
+
 		# Use phenograph to cluster trends? --> this assigns each gene to a specific cluster
-		# first need to make sure rows are genes, so need to transpose
+		# first need to make sure rows are genes
 		# remember: For a dataset of N rows, communities will be a length N vector of integers specifying a community assignment for each row in the data. Any rows assigned -1 were identified as outliers and should not be considered as a member of any community.
 		trends = np.transpose(trends)
+		# ^ why do we transpose? otherwise phenograph doesn't work...
+
+		# Phenograph
+		# communities: numpy integer array of community assignments for each row in data
+    	# graph: numpy sparse array of the graph that was used for clustering
+    	# Q: the modularity score for communities on graph
+
 		communities, graph, Q = phenograph.cluster(trends)
 		
+		clusters = np.unique(communities)
+
 		# Plot trends of each cluster, and show standard deviations
 		# (grey = actual trends, blue = mean, dotted blue = standard deviations)
 		#g = graph.toarray() # genes x cells (row x col)
-		clusters = np.unique(communities)
 		
-		#fig, axes = plt.subplots(rows = n-n//2, columns = n//2)
-		fig = plt.figure()
-		
-		for c in clusters:
-			ax = fig.add_subplot(2, 2, c+1)
-			axes.add(ax)
-			
-			indices = [i for i, x in enumerate(communities) if x == c]
-			relevant_trends = np.take(trends, indices)
-			for i in relevant_trends.index:
-				# the x axis are the bins, in this case it's the columns of the trends we're interested in
-				plt.plot(relevant_trends.columns, relevant_trends.index(i))
-			plt.title('Cluster ' + c)
-		
-		#plt.show()
-		
-		return fig, ax
+		fig = plt.figure( figsize = [30,20])
 
+		for c in clusters:
+
+			ax = fig.add_subplot(4,3,c+1) # might need to change the 4 and 3 to something more generic
+			plt.title('Cluster ' + str(c))
+
+		    # fetch rows that have the cluster assignment c
+			indices = [i for i, x in enumerate(communities) if x == c]
+
+			subsection = np.zeros(len(trends[0])) # this should work
+			for i in indices:
+		        # note that the x axis is the bins, in this case it's the columns of the trends we're interested in
+				# but don't worry about it, we can just do the following below:
+				plt.plot(list(trends[i]), '0.5')
+				subsection = np.vstack((subsection, trends[i]))
+			subsection = subsection[1:] # get rid of first all zeros np array
+		    
+			mu = np.mean(subsection, axis = 0)
+			sigma = np.std(subsection, axis=0)
+
+			#sigma = s.std(axis=1)
+		    
+			plt.plot(mu, 'blue')
+			plt.plot(mu+sigma, 'skyblue', ls='--')
+			plt.plot(mu-sigma, 'skyblue', ls='--')
+		    
+		return fig, ax
 			
 		
 	def plot_palantir_on_tsne(self, tsne, branches=None):
-		""" Plot Palantir results on tSNE maps
+		""" Plots Palantir results on tSNE maps
 		"""
 		
 		input("Please make sure that the tSNE data entered corresponds to the DiffEntrResults object you've entered.\n\
@@ -304,31 +292,43 @@ class DiffEntrResults(object):
 
 		# tsne maps of 1. trajectory, 2. differentiation, 3. branch probabilities
 		# look at wishbone tSNE function as a reference
-		
+
+		if branches is None:
+			branches = self.branch_prob.columns
+		# !Question! does the branches have to be in the branch_prob columns?
+
 		# Set up figure
-		fig = plt.figure(figsize=[8, 4])
-		gs = plt.GridSpec(1, 2)
-		
+		fig = plt.figure(figsize=[15, 15])
+		gs = plt.GridSpec(3, len(branches))
+
+
 		# Trajectory
 		ax = plt.subplot(gs[0, 0])
 		plt.scatter(tsne['x'], tsne['y'],
-			edgecolors='none', s=size, cmap=cmap, c=self.trajectory)
+		    edgecolors='none', s=size, cmap=cmap, c=self.trajectory)
 		ax.xaxis.set_major_locator(plt.NullLocator())
 		ax.yaxis.set_major_locator(plt.NullLocator())
-		plt.title('DiffEntrResults trajectory')
-		
-		if branches is None:
-			branches = self.branch_prob.columns
+		plt.title('Trajectory')
+
+		# Differentiation
+		ax = plt.subplot(gs[1,0])
+		plt.scatter(tsne['x'], tsne['y'],
+		    edgecolors='none', s=size, cmap=cmap, c=self.entropy)
+		ax.xaxis.set_major_locator(plt.NullLocator())
+		ax.yaxis.set_major_locator(plt.NullLocator())
+		plt.title('Differentiation')
+
 		# Branch
 		if branches is not None:
-			s = True
-			if s:
-				ax = plt.subplot(gs[0, 1])
-				plt.scatter(tsne['x'], tsne['y'],
-					edgecolors='none', s=size, 
-					color=[self.branch_colors[i] for i in branches])
-				ax.xaxis.set_major_locator(plt.NullLocator())
-				ax.yaxis.set_major_locator(plt.NullLocator())
-				plt.title('Branch associations')
-		
+		    i =0
+		    for b in branches:
+		        ax = plt.subplot(gs[2, i])
+		        plt.scatter(tsne['x'], tsne['y'],
+		            edgecolors='none', s=size, cmap=cmap,
+		             c=self.branch_prob[b])
+		        ax.xaxis.set_major_locator(plt.NullLocator())
+		        ax.yaxis.set_major_locator(plt.NullLocator())
+		        plt.title('Branch Probability for' + b, fontsize=12)
+		        i+=1
+
 		return fig, ax

@@ -70,7 +70,7 @@ def run_wishbone(data, start_cell, k=15, l=15, num_graphs=1, num_waypoints=250,
         lnn = np.transpose(lnn)
         print('lNN computed in : %.2f seconds' % (time.process_time()-start))
 
-        #set up return structure
+        # set up return structure
         trajectory = []
         waypoints = []
         branches = []
@@ -184,7 +184,7 @@ def run_wishbone(data, start_cell, k=15, l=15, num_graphs=1, num_waypoints=250,
 
                 # Set branch colors
                 if branch:
-                        results.branch_colors = dict( zip([2, 1, 3], qualitative_colors(3)))
+                        results.branch_colors = dict( zip([2, 1, 3], qualitative_colors(3)) )
                 
                 return results
                                                

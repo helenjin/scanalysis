@@ -1,8 +1,7 @@
 SCAnalysis
 ------
 
-Single Cell Analysis package
-combines MAGIC and Wishbone, with additional features (including Palantir)
+The Single Cell Analysis package includes MAGIC and Wishbone, with additional features (including Palantir)
 
 
 * Wishbone is an algorithm to align single cells from differentiation systems with bifurcating branches. Wishbone has been designed to work with multidimensional single cell data from diverse technologies such as Mass cytometry and single cell RNA-seq. 
@@ -31,7 +30,7 @@ A tutorial on SCAnalysis usage and results visualization for single cell RNA-seq
 https://nbviewer.jupyter.org/github/helenjin/scanalysis/blob/master/notebooks/SCAnalysis.ipynb
 
 ##### GUI
-Unfortunately, a python GUI is currently not available for SCAnalysis. Updates to follow.
+Unfortunately, a python GUI for SCAnalysis is currently unavailable. Updates to follow.
 However, it would be invoked, like so:
 
 		$> sca_gui.py
@@ -41,7 +40,7 @@ Setty M, Tadmor MD, Reich-Zeliger S, Angel O, Salame TM, Kathail P, Choi K, Bend
 
 van Dijk, David, et al. "MAGIC: A diffusion-based imputation method reveals gene-gene interactions in single-cell RNA-sequencing data." BioRxiv (2017): 111591. <http://www.biorxiv.org/content/early/2017/02/25/111591>
 
-##### Original Source Code
+##### Source Code
 Wishbone: <http://github.com/ManuSetty/wishbone.git>
 
 MAGIC: <http://github.com/pkathail/magic.git>
