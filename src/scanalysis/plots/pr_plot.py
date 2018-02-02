@@ -109,6 +109,7 @@ class DiffEntrResults(object):
 		return y_gam
 
 	
+	### something is wrong here...
 	def compute_marker_trends(self, marker_data, branches=None, compute_std=False, n_jobs=-1):
 		# marker_data is cells x genes (rows by columns)
 		
@@ -328,7 +329,7 @@ class DiffEntrResults(object):
 		             c=self.branch_prob[b])
 		        ax.xaxis.set_major_locator(plt.NullLocator())
 		        ax.yaxis.set_major_locator(plt.NullLocator())
-		        plt.title('Branch Probability for' + b, fontsize=12)
+		        plt.title('Branch Probability for ' + b, fontsize=12)
 		        i+=1
 
 		return fig, ax
